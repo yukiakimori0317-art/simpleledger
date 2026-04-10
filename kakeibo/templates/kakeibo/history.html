@@ -1,0 +1,213 @@
+{% extends "kakeibo/base.html" %}
+{% load humanize %}
+
+{% block title %}この日の履歴 | SimpleLedger{% endblock %}
+
+{% block content %}
+<div class="history-page">
+    <div class="container px-3 pt-3 pb-5">
+        <div class="page-wrap">
+
+            <!-- タイトル -->
+            <div class="page-title-wrap">
+                <h1 class="page-title">この日の履歴</h1>
+            </div>
+
+            <!-- 日付ナビ -->
+            <div class="glass-card date-card">
+                <div class="date-nav">
+                    <a href="?date={{ prev_date }}" class="nav-btn">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+
+                    <div class="date-text">
+                        {{ target_date|date:"Y年n月j日" }}
+                    </div>
+
+                    <a href="?date={{ next_date }}" class="nav-btn">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 合計 -->
+            <div class="glass-card total-card">
+                <div class="total-label">この日の合計</div>
+                <div class="total-amount">{{ total_amount|intcomma }}円</div>
+            </div>
+
+            <!-- 履歴 -->
+            {% if expenses %}
+            <div class="history-list">
+                {% for expense in expenses %}
+                <div class="history-item">
+                    <div class="history-row">
+                        <div class="history-left">
+                            <div class="history-category">{{ expense.category.name }}</div>
+                            <div class="history-time">{{ expense.created_at|date:"H:i" }}</div>
+                        </div>
+
+                        <div class="history-right">
+                            <div class="history-amount">{{ expense.amount|intcomma }}円</div>
+
+                            <div class="history-actions">
+                                <a href="{% url 'kakeibo:expense_edit' expense.pk %}?return_to=day&date={{ selected_date }}"
+                                    class="icon-btn edit-btn">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
+                                <a href="{% url 'kakeibo:expense_delete' expense.pk %}?return_to=day&date={{ selected_date }}"
+                                    class="icon-btn delete-btn">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-card empty-box">
+                この日の入力はありません
+            </div>
+            {% endif %}
+
+            <!-- 戻る -->
+            <div class="bottom-actions">
+                <a href="{% url 'kakeibo:index' %}" class="back-btn">OK</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+            linear-gradient(180deg, #131720 0%, #0d1118 100%);
+        color: #fff;
+    }
+
+    .page-wrap {
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .glass-card {
+        border-radius: 22px;
+        padding: 14px;
+        margin-bottom: 12px;
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    /* 日付ナビ */
+    .date-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+
+    .date-text {
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    /* 合計 */
+    .total-card {
+        text-align: center;
+    }
+
+    .total-label {
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.6);
+    }
+
+    .total-amount {
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    /* 履歴 */
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .history-item {
+        border-radius: 18px;
+        padding: 12px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .history-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .history-category {
+        font-weight: 700;
+    }
+
+    .history-time {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.5);
+    }
+
+    .history-amount {
+        font-weight: 800;
+    }
+
+    .history-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.08);
+    }
+
+    .edit-btn { color: #5ac8fa; }
+    .delete-btn { color: #ff453a; }
+
+    /* 戻る */
+    .back-btn {
+        display: block;
+        text-align: center;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}

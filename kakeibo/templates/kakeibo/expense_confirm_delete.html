@@ -1,0 +1,167 @@
+{% extends "kakeibo/base.html" %}
+{% load humanize %}
+
+{% block title %}削除確認 | SimpleLedger{% endblock %}
+
+{% block content %}
+<div class="delete-page">
+    <div class="container px-3 pt-3 pb-5">
+        <div class="page-wrap">
+            <h1 class="page-title">削除確認</h1>
+
+            <div class="glass-card delete-card">
+                <div class="delete-message">
+                    この明細を削除しますか？
+                </div>
+
+                <div class="expense-preview">
+                    <div class="preview-row">
+                        <span class="preview-label">項目</span>
+                        <span class="preview-value">{{ expense.category.name }}</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">金額</span>
+                        <span class="preview-value">{{ expense.amount|intcomma }}円</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">日付</span>
+                        <span class="preview-value">{{ expense.date|date:"Y/n/j" }}</span>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="return_to" value="{{ return_to }}">
+                    <input type="hidden" name="date" value="{{ back_date }}">
+                    <input type="hidden" name="year" value="{{ back_year }}">
+                    <input type="hidden" name="month" value="{{ back_month }}">
+                    <input type="hidden" name="back_date" value="{{ back_date }}">
+                    <input type="hidden" name="back_year" value="{{ back_year }}">
+                    <input type="hidden" name="back_month" value="{{ back_month }}">
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn delete-btn btn-lg">削除する</button>
+
+                        {% if return_to == "summary" %}
+                            {% if back_year and back_month %}
+                                <a href="{% url 'kakeibo:summary' %}?year={{ back_year }}&month={{ back_month }}" class="btn cancel-btn btn-lg">
+                                    キャンセル
+                                </a>
+                            {% else %}
+                                <a href="{% url 'kakeibo:summary' %}" class="btn cancel-btn btn-lg">キャンセル</a>
+                            {% endif %}
+                        {% elif return_to == "month_history" %}
+                        <a href="{% url 'kakeibo:month_history' %}?year={{ back_year }}&month={{ back_month }}"
+                            class="btn cancel-btn btn-lg">
+                            キャンセル
+                        </a>
+                        {% elif back_date %}
+                        <a href="{% url 'kakeibo:history' %}?date={{ back_date }}" class="btn cancel-btn btn-lg">
+                            キャンセル
+                        </a>
+                        {% else %}
+                        <a href="{% url 'kakeibo:history' %}" class="btn cancel-btn btn-lg">キャンセル</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+            linear-gradient(180deg, #131720 0%, #0d1118 100%);
+        color: rgba(255, 255, 255, 0.96);
+        min-height: 100vh;
+    }
+
+    .delete-page {
+        min-height: 100vh;
+        padding-bottom: 40px;
+    }
+
+    .page-wrap {
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 14px;
+    }
+
+    .glass-card {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.06));
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 24px;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 10px 26px rgba(0, 0, 0, 0.22);
+    }
+
+    .delete-card {
+        padding: 18px 16px;
+    }
+
+    .delete-message {
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 14px;
+        color: #fff;
+    }
+
+    .expense-preview {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .preview-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .preview-label {
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.62);
+        font-weight: 700;
+    }
+
+    .preview-value {
+        font-size: 0.92rem;
+        color: #fff;
+        font-weight: 800;
+    }
+
+    .delete-btn {
+        border: none;
+        border-radius: 16px;
+        font-weight: 800;
+        background: rgba(255, 69, 58, 0.18);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .cancel-btn {
+        border-radius: 16px;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+</style>
+{% endblock %}

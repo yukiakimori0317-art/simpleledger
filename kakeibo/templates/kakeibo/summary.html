@@ -1,0 +1,825 @@
+{% extends "kakeibo/base.html" %}
+{% load humanize %}
+
+{% block title %}集計 | SimpleLedger{% endblock %}
+
+{% block content %}
+<div class="summary-page">
+    <div class="container px-3 pt-3 pb-5">
+        <div class="page-wrap">
+
+            <div class="page-title-wrap">
+                <h1 class="page-title">集計</h1>
+                <div class="page-subtitle">
+                    開始日 {{ cycle_start_day }}日 ／
+                    集計期間 {{ cycle_start_date|date:"Y/n/j" }} 〜 {{ cycle_end_date|date:"Y/n/j" }}
+                </div>
+            </div>
+
+            <div class="month-jump-card glass-card">
+                <div class="month-inline-nav">
+                    <a href="{% url 'kakeibo:summary' %}?year={{ prev_year }}&month={{ prev_month }}"
+                        class="nav-icon-btn" aria-label="前月">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+
+                    <select name="year" class="inline-select"
+                        onchange="location.href='?year='+this.value+'&month={{ selected_month }}'">
+                        {% for y in year_choices %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="month" class="inline-select"
+                        onchange="location.href='?year={{ selected_year }}&month='+this.value">
+                        {% for m in month_choices %}
+                        <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+                            {{ m }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <span class="inline-label">月</span>
+
+                    <a href="{% url 'kakeibo:summary' %}?year={{ next_year }}&month={{ next_month }}"
+                        class="nav-icon-btn" aria-label="次月">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="summary-stack">
+
+                <section class="summary-card glass-card month-main-card">
+                    <div class="summary-label">
+                        {{ selected_year }}年{{ selected_month }}月の支出合計
+                        {% if is_current_view %}
+                        <span class="summary-inline-note">（{{ today|date:"n/j" }}現在）</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-amount">{{ month_total|intcomma }}円</div>
+
+                    <div class="summary-meta">
+                        集計期間：{{ cycle_start_date|date:"n/j" }} 〜 {{ cycle_end_date|date:"n/j" }} ／ 入力 {{ month_count }}件
+                    </div>
+                </section>
+
+                <section class="section-card glass-card">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別合計</div>
+                            <div class="section-subtitle">件数と合計金額を表示</div>
+                        </div>
+                    </div>
+
+                    {% if category_totals %}
+                    <div class="category-total-list">
+                        {% for item in category_totals %}
+                        <div class="category-total-row">
+                            <div class="category-total-main">
+                                <div class="category-left">
+                                    <div class="category-dot"></div>
+
+                                    <div class="category-name-wrap">
+                                        <div class="category-total-name">{{ item.category_name }}</div>
+
+                                        <div class="category-total-bar-track">
+                                            {% if item.has_budget %}
+                                            <div class="category-total-bar-fill {% if item.is_over_budget %}is-over{% endif %}"
+                                                style="width: {{ item.bar_percent }}%;"></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="category-total-right">
+                                    <div class="category-total-amount">{{ item.total|intcomma }}円</div>
+                                    <div class="category-total-count">{{ item.count }}件</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-box">
+                        カテゴリ別集計はまだありません
+                    </div>
+                    {% endif %}
+                </section>
+
+                <section class="section-card glass-card">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月の日ごと履歴</div>
+                            <div class="section-subtitle">タップで明細を開閉できます</div>
+                        </div>
+                    </div>
+
+                    {% if grouped_daily_expenses %}
+                    <div class="daily-list">
+                        {% for day_group in grouped_daily_expenses %}
+                        <details class="day-card">
+                            <summary class="day-summary">
+                                <div class="day-left">
+                                    <div class="day-date">{{ day_group.date|date:"n/j（D）" }}</div>
+                                    <div class="day-count">{{ day_group.count }}件</div>
+                                </div>
+
+                                <div class="day-right">
+    <div class="day-total">{{ day_group.total|intcomma }}円</div>
+
+    <!-- 👇 追加：目アイコン -->
+    <a href="{% url 'kakeibo:history' %}?date={{ day_group.date|date:'Y-m-d' }}"
+        class="icon-action-btn"
+        aria-label="詳細を見る"
+        title="詳細を見る">
+        <i class="bi bi-eye"></i>
+    </a>
+
+    <!-- 👇 既存：開閉 -->
+    <div class="day-toggle-icons">
+                                        <span class="toggle-icon toggle-open" aria-label="明細を開く">
+                                            <i class="bi bi-chevron-down"></i>
+                                        </span>
+                                        <span class="toggle-icon toggle-close" aria-label="明細を閉じる">
+                                            <i class="bi bi-chevron-up"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </summary>
+
+                            <div class="day-detail">
+                                {% for expense in day_group.expenses %}
+                                <div class="expense-item">
+                                    <div class="expense-row">
+                                        <div class="expense-left">
+                                            <div class="expense-category">{{ expense.category.name }}</div>
+                                            <div class="expense-time">{{ expense.created_at|date:"H:i" }}</div>
+                                        </div>
+
+                                        <div class="expense-right">
+                                            <div class="expense-amount">{{ expense.amount|intcomma }}円</div>
+
+                                            <div class="expense-actions">
+                                                <a href="{% url 'kakeibo:expense_edit' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn edit-btn summary-edit-link"
+                                                    aria-label="編集"
+                                                    title="編集">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+
+                                                <a href="{% url 'kakeibo:expense_delete' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn delete-btn summary-delete-link"
+                                                    aria-label="削除"
+                                                    title="削除">
+                                                    <i class="bi bi-trash3"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-box">
+                        この期間の支出はまだありません
+                    </div>
+                    {% endif %}
+                </section>
+            </div>
+
+            <div class="bottom-actions">
+                <a href="{% url 'kakeibo:index' %}" class="back-btn">OK</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --bg1: #0f1117;
+        --bg2: #171b24;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-strong: rgba(255, 255, 255, 0.12);
+        --line: rgba(255, 255, 255, 0.14);
+        --text-main: rgba(255, 255, 255, 0.96);
+        --text-sub: rgba(255, 255, 255, 0.62);
+        --shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.22);
+        --accent-blue: #5ac8fa;
+        --accent-green: #34c759;
+        --accent-red: #ff453a;
+    }
+
+    body {
+        background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+            radial-gradient(circle at 20% 20%, rgba(90, 200, 250, 0.08), transparent 22%),
+            radial-gradient(circle at 80% 10%, rgba(52, 199, 89, 0.08), transparent 20%),
+            linear-gradient(180deg, #131720 0%, #0d1118 100%);
+        color: var(--text-main);
+        min-height: 100vh;
+    }
+
+    .summary-page {
+        min-height: 100vh;
+        padding-bottom: 110px;
+    }
+
+    .page-wrap {
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .page-title-wrap {
+        margin-bottom: 14px;
+    }
+
+    .page-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.96);
+    }
+
+    .page-subtitle {
+        margin-top: 4px;
+        font-size: 0.82rem;
+        color: var(--text-sub);
+    }
+
+    .summary-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .glass-card {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.06));
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            var(--shadow-soft);
+    }
+
+    .month-jump-card {
+        padding: 14px 14px 12px;
+        margin-bottom: 14px;
+    }
+
+    .month-inline-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .inline-select {
+        flex: 1;
+        height: 42px;
+        border-radius: 14px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .inline-select:focus {
+        outline: none;
+        border-color: rgba(90, 200, 250, 0.55);
+        box-shadow: 0 0 0 0.18rem rgba(90, 200, 250, 0.14);
+    }
+
+    .inline-select option {
+        color: #111;
+    }
+
+    .inline-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .nav-icon-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        text-decoration: none;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-icon-btn:active {
+        transform: scale(0.92);
+    }
+
+    .summary-card {
+        padding: 20px 18px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .summary-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 30%);
+        pointer-events: none;
+    }
+
+    .month-main-card {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 16px 40px rgba(0, 0, 0, 0.26);
+    }
+
+    .summary-label {
+        font-size: 0.93rem;
+        color: var(--text-sub);
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+
+    .summary-inline-note {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.86em;
+    }
+
+    .summary-amount {
+        font-size: clamp(2rem, 8vw, 2.9rem);
+        font-weight: 800;
+        line-height: 1.08;
+        color: #fff;
+        letter-spacing: 0.01em;
+        word-break: break-all;
+    }
+
+    .summary-meta {
+        margin-top: 8px;
+        font-size: 0.88rem;
+        color: var(--text-sub);
+    }
+
+    .section-card {
+        padding: 16px 12px 12px;
+    }
+
+    .section-head {
+        margin-bottom: 12px;
+        padding: 0 4px;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .section-subtitle {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        color: var(--text-sub);
+    }
+
+    .daily-list,
+    .category-total-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .category-total-row {
+        padding: 10px 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .category-total-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .category-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .category-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5ac8fa, #34c759);
+        box-shadow:
+            0 0 6px rgba(90, 200, 250, 0.45),
+            0 0 10px rgba(52, 199, 89, 0.26);
+        flex-shrink: 0;
+    }
+
+    .category-name-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .category-total-name {
+        font-size: 0.94rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+        word-break: break-word;
+    }
+
+    .category-total-bar-track {
+        position: relative;
+        margin-top: 4px;
+        height: 6px;
+        width: 100%;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.10);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
+    }
+
+    .category-total-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #30d158 0%, #34c759 40%, #66e29a 100%);
+        box-shadow:
+            inset 0 1px 2px rgba(255, 255, 255, 0.35),
+            0 0 8px rgba(52, 199, 89, 0.35);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-total-bar-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: -20%;
+        width: 38%;
+        background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.22) 50%,
+                transparent 100%);
+        transform: skewX(-22deg);
+    }
+
+    .category-total-bar-fill.is-over {
+        background: linear-gradient(90deg, #ff3b30 0%, #ff453a 40%, #ff7b72 100%);
+        box-shadow:
+            inset 0 1px 2px rgba(255, 255, 255, 0.3),
+            0 0 8px rgba(255, 69, 58, 0.35);
+    }
+
+    .category-total-right {
+        flex-shrink: 0;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 1px;
+    }
+
+    .category-total-amount {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .category-total-count {
+        margin-top: 0;
+        font-size: 0.72rem;
+        color: var(--text-sub);
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .day-card {
+        border-radius: 20px;
+        overflow: hidden;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .day-summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 14px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .day-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .day-left {
+        min-width: 0;
+    }
+
+    .day-date {
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.15;
+    }
+
+    .day-count {
+        margin-top: 3px;
+        font-size: 0.76rem;
+        color: var(--text-sub);
+        line-height: 1.1;
+    }
+
+    .day-right {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .day-total {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+    }
+
+    .day-toggle-icons {
+        margin-top: 5px;
+        min-height: 18px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .toggle-icon {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.92rem;
+        line-height: 1;
+    }
+
+    .toggle-open {
+        color: var(--accent-blue);
+    }
+
+    .toggle-close {
+        display: none;
+        color: var(--accent-green);
+    }
+
+    .day-card[open] .toggle-open {
+        display: none;
+    }
+
+    .day-card[open] .toggle-close {
+        display: inline-flex;
+    }
+
+    .day-detail {
+        padding: 0 10px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .expense-item {
+        padding: 12px 13px;
+        border-radius: 16px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .expense-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .expense-left {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .expense-category {
+        font-size: 0.94rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .expense-time {
+        margin-top: 3px;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.5);
+        line-height: 1.1;
+    }
+
+    .expense-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .expense-amount {
+        font-size: 0.96rem;
+        font-weight: 800;
+        color: #fff;
+        white-space: nowrap;
+    }
+
+    .expense-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .icon-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.88rem;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        transition: all 0.12s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .icon-action-btn:active {
+        transform: scale(0.92);
+    }
+
+    .edit-btn {
+        color: #5ac8fa;
+    }
+
+    .delete-btn {
+        color: #ff453a;
+    }
+
+    .empty-box {
+        padding: 18px 14px;
+        border-radius: 18px;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-sub);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bottom-actions {
+        position: sticky;
+        bottom: 0;
+        padding-top: 16px;
+        margin-top: 18px;
+    }
+
+    .back-btn {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        height: 56px;
+        border-radius: 18px;
+        color: #fff;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .back-btn:active {
+        transform: translateY(1px);
+    }
+
+    @media (max-width: 420px) {
+        .month-jump-card {
+            padding: 12px 12px 11px;
+        }
+
+        .summary-card {
+            padding: 18px 15px;
+        }
+
+        .section-card {
+            padding: 14px 10px 10px;
+        }
+
+        .day-summary,
+        .category-total-row {
+            padding: 11px 11px;
+        }
+
+        .day-date {
+            font-size: 0.9rem;
+        }
+
+        .day-total {
+            font-size: 0.94rem;
+        }
+
+        .category-total-name {
+            font-size: 0.9rem;
+        }
+
+        .category-total-amount {
+            font-size: 0.86rem;
+        }
+
+        .expense-item {
+            padding: 11px 11px;
+        }
+
+        .expense-category {
+            font-size: 0.88rem;
+        }
+
+        .expense-amount {
+            font-size: 0.9rem;
+        }
+
+        .icon-action-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 0.84rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const editLinks = document.querySelectorAll(".summary-edit-link");
+        const deleteLinks = document.querySelectorAll(".summary-delete-link");
+
+        editLinks.forEach(link => {
+            link.addEventListener("click", function () {
+                if (window.showPremiumToast) {
+                    window.showPremiumToast("編集画面を開きます", "info", 1200);
+                }
+            });
+        });
+
+        deleteLinks.forEach(link => {
+            link.addEventListener("click", function () {
+                if (window.showPremiumToast) {
+                    window.showPremiumToast("削除確認へ移動します", "warning", 1200);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

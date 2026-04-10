@@ -1,0 +1,447 @@
+{% extends "kakeibo/base.html" %}
+
+{% block title %}{{ page_title }} | SimpleLedger{% endblock %}
+
+{% block content %}
+<div class="category-form-page">
+    <div class="container px-3 pt-3 pb-5">
+        <div class="page-wrap">
+
+            <div class="page-logo-wrap">
+                <div class="page-logo">SIMPLELEDGER</div>
+            </div>
+
+            <h1 class="page-title">{{ page_title }}</h1>
+
+            <div class="glass-card form-card">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="field-error">{{ form.non_field_errors|striptags }}</div>
+                    {% endif %}
+
+                    <div class="field-block">
+                        <label for="{{ form.name.id_for_label }}" class="field-label">項目名</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="field-error">{{ form.name.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="field-block">
+                        <label for="{{ form.budget.id_for_label }}" class="field-label">月予算</label>
+                        {{ form.budget }}
+                        {% if form.budget.errors %}
+                            <div class="field-error">{{ form.budget.errors|striptags }}</div>
+                        {% endif %}
+                        <div class="field-help">使わない場合は 0 のままでOKです</div>
+                    </div>
+
+                    <div class="field-block">
+                        <label for="{{ form.icon.id_for_label }}" class="field-label">ロゴ画像</label>
+
+                        <div class="file-input-wrap">
+                            {{ form.icon }}
+                        </div>
+
+                        {% if form.icon.errors %}
+                            <div class="field-error">{{ form.icon.errors|striptags }}</div>
+                        {% endif %}
+
+                        <div class="field-help">
+                            PNG画像がおすすめです。背景透過だと入力画面で見やすくなります。
+                        </div>
+
+                        <div class="icon-preview-card">
+                            <div class="icon-preview-head">プレビュー</div>
+
+                            <div class="icon-preview-box">
+                                <img
+                                    id="icon-preview"
+                                    src="{% if category and category.icon %}{{ category.icon.url }}{% endif %}"
+                                    alt="選択画像プレビュー"
+                                    {% if category and category.icon %}style="display:block;"{% else %}style="display:none;"{% endif %}
+                                >
+
+                                <div
+                                    id="icon-preview-empty"
+                                    class="icon-preview-empty"
+                                    {% if category and category.icon %}style="display:none;"{% else %}style="display:flex;"{% endif %}
+                                >
+                                    <i class="bi bi-image"></i>
+                                    <span>画像を選ぶとここに表示されます</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-stack">
+                        <button type="submit" class="btn-save-main">
+                            <i class="bi bi-check2-circle"></i>
+                            <span>保存する</span>
+                        </button>
+
+                        {% if is_first_category %}
+                            <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>入力画面へ戻る</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'kakeibo:category_list' %}" class="btn-back-soft">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>設定画面へ戻る</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --bg1: #0f1117;
+        --bg2: #171b24;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-strong: rgba(255, 255, 255, 0.12);
+        --line: rgba(255, 255, 255, 0.14);
+        --text-main: rgba(255, 255, 255, 0.96);
+        --text-sub: rgba(255, 255, 255, 0.62);
+        --accent-blue-1: #72c6f1;
+        --accent-blue-2: #2f7ea7;
+        --shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.22);
+    }
+
+    body {
+        background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+            radial-gradient(circle at 20% 20%, rgba(90, 200, 250, 0.08), transparent 22%),
+            radial-gradient(circle at 80% 10%, rgba(255, 159, 10, 0.08), transparent 20%),
+            linear-gradient(180deg, #131720 0%, #0d1118 100%);
+        color: var(--text-main);
+        min-height: 100vh;
+        padding-bottom: 40px;
+    }
+
+    .category-form-page {
+        min-height: 100vh;
+    }
+
+    .page-wrap {
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    .page-logo-wrap {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 14px;
+        padding-left: 2px;
+    }
+
+    .page-logo {
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        color: rgba(255, 255, 255, 0.96);
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.08);
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .page-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        margin-bottom: 14px;
+    }
+
+    .glass-card {
+        border-radius: 24px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 10px 26px rgba(0, 0, 0, 0.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glass-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.14), transparent 26%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 34%);
+        pointer-events: none;
+    }
+
+    .form-card {
+        padding: 18px 16px;
+    }
+
+    .field-block {
+        position: relative;
+        z-index: 1;
+        margin-bottom: 18px;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+
+    .form-control,
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
+        width: 100%;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.06)) !important;
+        color: #fff !important;
+        min-height: 46px;
+        padding: 10px 12px !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .form-control::placeholder,
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.42) !important;
+    }
+
+    .form-control:focus,
+    input:focus {
+        color: #fff !important;
+        border-color: rgba(90, 200, 250, 0.45) !important;
+        box-shadow:
+            0 0 0 3px rgba(90, 200, 250, 0.10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 8px 18px rgba(0, 0, 0, 0.12) !important;
+        outline: none;
+    }
+
+    .file-input-wrap input[type="file"] {
+        padding: 11px 12px !important;
+        cursor: pointer;
+    }
+
+    .file-input-wrap input[type="file"]::file-selector-button {
+        border: none;
+        border-radius: 12px;
+        margin-right: 10px;
+        padding: 8px 12px;
+        color: #fff;
+        font-weight: 700;
+        background:
+            linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 6px 14px rgba(0, 0, 0, 0.16);
+        cursor: pointer;
+    }
+
+    .field-help {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.58);
+    }
+
+    .field-error {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #ff9f98;
+        line-height: 1.6;
+    }
+
+    .icon-preview-card {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 18px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .icon-preview-head {
+        font-size: 0.84rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.74);
+        margin-bottom: 10px;
+    }
+
+    .icon-preview-box {
+        min-height: 120px;
+        border-radius: 18px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.05));
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px;
+        overflow: hidden;
+    }
+
+    #icon-preview {
+        max-width: 100%;
+        max-height: 110px;
+        object-fit: contain;
+        display: block;
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.22));
+    }
+
+    .icon-preview-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.54);
+        font-size: 0.86rem;
+        line-height: 1.6;
+    }
+
+    .icon-preview-empty i {
+        font-size: 1.4rem;
+        color: rgba(154, 230, 255, 0.82);
+    }
+
+    .action-stack {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 10px;
+        margin-top: 4px;
+    }
+
+    .btn-save-main {
+        min-height: 52px;
+        border: none;
+        border-radius: 18px;
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background:
+            linear-gradient(180deg, rgba(114, 198, 241, 0.98), rgba(47, 126, 167, 0.98));
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 12px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    .btn-save-main:active {
+        transform: translateY(1px);
+    }
+
+    .btn-back-soft {
+        min-height: 50px;
+        border-radius: 18px;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 8px 18px rgba(0, 0, 0, 0.14);
+    }
+
+    .btn-back-soft:active {
+        transform: translateY(1px);
+    }
+
+    @media (max-width: 420px) {
+        .page-title {
+            font-size: 1.32rem;
+        }
+
+        .form-card {
+            padding: 16px 14px;
+        }
+
+        .icon-preview-box {
+            min-height: 110px;
+        }
+
+        #icon-preview {
+            max-height: 96px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const fileInput = document.getElementById("id_icon");
+    const preview = document.getElementById("icon-preview");
+    const empty = document.getElementById("icon-preview-empty");
+
+    if (!fileInput || !preview || !empty) return;
+
+    function showEmpty() {
+        preview.src = "";
+        preview.style.display = "none";
+        empty.style.display = "flex";
+    }
+
+    function showImage(src) {
+        preview.src = src;
+        preview.style.display = "block";
+        empty.style.display = "none";
+    }
+
+    fileInput.addEventListener("change", function () {
+        const file = this.files && this.files[0];
+
+        if (!file) {
+            showEmpty();
+            return;
+        }
+
+        if (!file.type || !file.type.startsWith("image/")) {
+            showEmpty();
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            showImage(e.target.result);
+        };
+
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+{% endblock %}

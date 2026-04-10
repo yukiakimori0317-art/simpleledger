@@ -1,0 +1,1534 @@
+{% extends "kakeibo/base.html" %}
+{% load humanize %}
+
+{% block title %}入力 | SimpleLedger{% endblock %}
+
+{% block content %}
+<div class="ledger-page">
+    <div class="container px-3 pt-3 pb-5">
+
+        <div class="page-logo-wrap">
+            <div class="page-logo">SIMPLELEDGER</div>
+        </div>
+
+        <div class="calc-shell mx-auto">
+            <div class="calc-top-glow"></div>
+
+            <div class="today-summary-card mx-auto mt-3">
+                <div class="today-summary-top">
+                    <div class="today-summary-heading-wrap">
+                        <div class="today-summary-sub" id="summary-date-text">
+                            {{ target_date|date:"Y年n月j日" }}
+                        </div>
+                    </div>
+
+                    <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}" id="summary-state-chip">
+                        {% if is_today_input_date %}
+                            TODAY
+                        {% else %}
+                            PAST
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="today-summary-main">
+                    <div class="today-summary-amount" id="summary-amount">
+                        {{ selected_day_total|intcomma }}円
+                    </div>
+                    <div class="today-summary-count" id="summary-count">
+                        {{ selected_day_count }}件
+                    </div>
+                </div>
+
+                <div class="today-summary-divider"></div>
+
+                <div class="today-summary-bottom">
+                    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn" aria-label="前日">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+
+                    <form method="get" class="entry-date-form" id="entry-date-form">
+                        <input
+                            type="date"
+                            name="date"
+                            id="entry-date-input"
+                            class="entry-date-input"
+                            value="{{ target_date|date:'Y-m-d' }}"
+                            max="{{ today|date:'Y-m-d' }}"
+                        >
+                    </form>
+
+                    {% if can_go_next %}
+                        <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn" aria-label="翌日">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    {% else %}
+                        <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    {% endif %}
+                </div>
+
+                <div class="today-summary-actions">
+                    {% if not is_today_input_date %}
+                        <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            <span>今日に戻す</span>
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}" class="mini-action-btn mini-action-history">
+                        <i class="bi bi-clock-history"></i>
+                        <span>この日の履歴</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="calc-inner">
+
+                <div class="display-panel">
+                    <div class="amount-display" id="amount-display">0円</div>
+                    <div class="formula-display" id="formula-display">&nbsp;</div>
+                </div>
+
+                <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_expense' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="amount" id="hidden-amount">
+                    <input type="hidden" name="category" id="hidden-category">
+                    <input type="hidden" name="entry_date" id="hidden-entry-date" value="{{ target_date|date:'Y-m-d' }}">
+                </form>
+
+                <div class="calculator-grid">
+                    <button type="button" class="calc-btn calc-util resin-btn" data-action="clear">AC</button>
+                    <button type="button" class="calc-btn calc-util resin-btn" data-action="delete">Del</button>
+                    <button
+                        type="button"
+                        class="calc-btn calc-item resin-btn"
+                        id="open-category-btn"
+                        data-category-count="{{ categories|length }}"
+                        data-category-create-url="{% url 'kakeibo:category_create' %}"
+                    >
+                        項目
+                    </button>
+                    <button type="button" class="calc-btn calc-operator resin-btn" data-value="/">÷</button>
+
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="7">7</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="8">8</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="9">9</button>
+                    <button type="button" class="calc-btn calc-operator resin-btn" data-value="*">×</button>
+
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="4">4</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="5">5</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="6">6</button>
+                    <button type="button" class="calc-btn calc-operator resin-btn" data-value="-">－</button>
+
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="1">1</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="2">2</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="3">3</button>
+                    <button type="button" class="calc-btn calc-operator resin-btn" data-value="+">＋</button>
+
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="00">00</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value="0">0</button>
+                    <button type="button" class="calc-btn calc-number resin-btn" data-value=".">.</button>
+                    <button type="button" class="calc-btn calc-equals resin-btn" data-action="equals">＝</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="category-drawer-backdrop" id="category-drawer-backdrop"></div>
+
+    <div class="category-drawer" id="category-drawer">
+        <div class="drawer-handle"></div>
+        <div class="drawer-header">
+            <div>
+                <div class="drawer-title">項目を選択</div>
+                <div class="drawer-subtitle">タップするとそのまま保存します</div>
+            </div>
+            <button type="button" class="drawer-close" id="close-category-btn">✕</button>
+        </div>
+
+        <div class="category-grid">
+            {% for category in categories %}
+            <button type="button" class="category-btn" data-category-id="{{ category.id }}"
+                data-category-name="{{ category.name }}">
+                <div class="category-btn-inner">
+                    {% if category.icon %}
+                    <img src="{{ category.icon.url }}" alt="{{ category.name }}" class="category-icon-image">
+                    {% else %}
+                    <span class="category-text-only">{{ category.name }}</span>
+                    {% endif %}
+                </div>
+            </button>
+            {% empty %}
+            <div class="category-empty-card">
+                <div class="category-empty-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <div class="category-empty-title">項目がまだありません</div>
+                <div class="category-empty-text">
+                    最初に項目を追加すると、ここからすぐ入力できるようになります
+                </div>
+                <a href="{% url 'kakeibo:category_create' %}" class="category-empty-link">
+                    項目を追加する
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="save-overlay" id="save-overlay">
+        <div class="save-ring-wrap">
+            <div class="save-aura"></div>
+            <div class="save-ring-outer"></div>
+            <div class="save-ring"></div>
+            <div class="save-ring-inner-cut"></div>
+            <div class="save-check">✓</div>
+        </div>
+        <div class="save-text" id="save-text">入力しました</div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="{% url 'kakeibo:summary' %}" class="bottom-nav-btn">
+            <i class="bi bi-bar-chart fs-5"></i>
+            <span>記録</span>
+        </a>
+        <a href="{% url 'kakeibo:category_list' %}" class="bottom-nav-btn">
+            <i class="bi bi-gear fs-5"></i>
+            <span>設定</span>
+        </a>
+    </nav>
+</div>
+
+<style>
+    :root {
+        --bg1: #0f1117;
+        --bg2: #171b24;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-strong: rgba(255, 255, 255, 0.12);
+        --line: rgba(255, 255, 255, 0.15);
+        --text-main: rgba(255, 255, 255, 0.96);
+        --text-sub: rgba(255, 255, 255, 0.62);
+        --shadow-deep: 0 24px 60px rgba(0, 0, 0, 0.34);
+        --shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.22);
+        --accent-red: #ff3b30;
+        --accent-orange: #ff9f0a;
+        --accent-blue: #5ac8fa;
+        --accent-green: #34c759;
+        --accent-green-soft: #7ef0a2;
+    }
+
+    body {
+        background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+            radial-gradient(circle at 20% 20%, rgba(90, 200, 250, 0.08), transparent 22%),
+            radial-gradient(circle at 80% 10%, rgba(255, 159, 10, 0.08), transparent 20%),
+            linear-gradient(180deg, #131720 0%, #0d1118 100%);
+        color: var(--text-main);
+        min-height: 100vh;
+        padding-bottom: 110px;
+    }
+
+    .ledger-page {
+        min-height: 100vh;
+    }
+
+    .page-logo-wrap {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 14px;
+        padding-left: 2px;
+    }
+
+    .page-logo {
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        color: rgba(255, 255, 255, 0.96);
+        text-align: left;
+        user-select: none;
+        -webkit-user-select: none;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.08);
+    }
+
+    .calc-shell {
+        position: relative;
+        max-width: 430px;
+        border-radius: 34px;
+        padding: 1px;
+        background:
+            linear-gradient(145deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.06) 22%, rgba(255, 255, 255, 0.12) 65%, rgba(255, 255, 255, 0.03));
+        box-shadow:
+            0 30px 80px rgba(0, 0, 0, 0.45),
+            inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .calc-top-glow {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 62%;
+        height: 44px;
+        border-radius: 999px;
+        background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.24), transparent 70%);
+        filter: blur(14px);
+        pointer-events: none;
+    }
+
+    .calc-inner {
+        position: relative;
+        border-radius: 33px;
+        padding: 18px 16px 18px;
+        background:
+            linear-gradient(180deg, rgba(32, 38, 48, 0.94), rgba(18, 22, 30, 0.96));
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        overflow: hidden;
+    }
+
+    .calc-inner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 22%),
+            radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.15), transparent 34%);
+        pointer-events: none;
+    }
+
+    .today-summary-card {
+        max-width: 430px;
+        border-radius: 24px;
+        padding: 14px 16px 14px;
+        margin-bottom: 12px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 10px 26px rgba(0, 0, 0, 0.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .today-summary-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.20), transparent 24%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%);
+        pointer-events: none;
+    }
+
+    .today-summary-top {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .today-summary-sub {
+        margin-top: 2px;
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.96);
+        letter-spacing: 0.02em;
+    }
+
+    .today-chip {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    }
+
+    .today-chip.is-today {
+        background: rgba(52, 199, 89, 0.16);
+        color: #7df3a0;
+    }
+
+    .today-chip.is-past {
+        background: rgba(90, 200, 250, 0.14);
+        color: #91ddff;
+    }
+
+    .today-summary-main {
+        position: relative;
+        z-index: 1;
+        margin-top: 10px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .today-summary-amount {
+        font-size: clamp(1.7rem, 5.6vw, 2.3rem);
+        line-height: 1.06;
+        font-weight: 800;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.08);
+        word-break: break-all;
+    }
+
+    .today-summary-count {
+        flex-shrink: 0;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.72);
+        padding-bottom: 4px;
+    }
+
+    .today-summary-divider {
+        height: 1px;
+        margin: 12px 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    }
+
+    .today-summary-bottom {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 42px 1fr 42px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .date-nav-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 6px 16px rgba(0, 0, 0, 0.14);
+    }
+
+    .date-nav-btn:active {
+        transform: translateY(1px);
+    }
+
+    .date-nav-btn.is-disabled {
+        opacity: 0.38;
+        cursor: default;
+    }
+
+    .entry-date-form {
+        display: block;
+        min-width: 0;
+    }
+
+    .entry-date-input {
+        width: 100%;
+        height: 46px;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
+        color: #fff;
+        padding: 0 12px;
+        font-weight: 700;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .entry-date-input::-webkit-calendar-picker-indicator {
+        filter: invert(1) brightness(1.5);
+        opacity: 0.9;
+        cursor: pointer;
+    }
+
+    .entry-date-input:focus {
+        outline: none;
+        border-color: rgba(90, 200, 250, 0.45);
+        box-shadow:
+            0 0 0 3px rgba(90, 200, 250, 0.10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .today-summary-actions {
+        position: relative;
+        z-index: 1;
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .mini-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 40px;
+        padding: 0 14px;
+        border-radius: 16px;
+        text-decoration: none;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 800;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 8px 18px rgba(0, 0, 0, 0.14);
+    }
+
+    .mini-action-btn:active {
+        transform: translateY(1px);
+    }
+
+    .mini-action-soft {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .mini-action-history {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+        min-width: 132px;
+    }
+
+    .display-panel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 26px;
+        padding: 16px 16px 14px;
+        margin-bottom: 16px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            inset 0 -16px 22px rgba(0, 0, 0, 0.16),
+            0 10px 26px rgba(0, 0, 0, 0.22);
+    }
+
+    .display-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent 30%),
+            radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.18), transparent 26%);
+        pointer-events: none;
+    }
+
+    .amount-display {
+        min-height: 54px;
+        text-align: right;
+        font-size: clamp(2rem, 7vw, 3rem);
+        line-height: 1.08;
+        font-weight: 300;
+        letter-spacing: 0.01em;
+        color: #fff;
+        text-shadow: 0 1px 10px rgba(255, 255, 255, 0.08);
+        word-break: break-all;
+    }
+
+    .formula-display {
+        min-height: 22px;
+        text-align: right;
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.50);
+        letter-spacing: 0.03em;
+        margin-top: 3px;
+    }
+
+    .calculator-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 11px;
+    }
+
+    .calc-btn {
+        position: relative;
+        height: 72px;
+        border: none;
+        border-radius: 24px;
+        color: #fff;
+        font-size: 1.45rem;
+        font-weight: 600;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        transition:
+            transform 0.12s ease,
+            box-shadow 0.12s ease,
+            filter 0.12s ease,
+            background 0.12s ease;
+        will-change: transform;
+    }
+
+    .calc-btn:focus {
+        outline: none;
+    }
+
+    .resin-btn {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.09) 18%, rgba(255, 255, 255, 0.02) 22%, rgba(0, 0, 0, 0.08) 100%),
+            linear-gradient(180deg, #4c5362 0%, #303744 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1.2px 0 rgba(255, 255, 255, 0.30),
+            inset 0 -7px 12px rgba(0, 0, 0, 0.22),
+            0 7px 0 rgba(17, 20, 27, 0.96),
+            0 11px 20px rgba(0, 0, 0, 0.26);
+    }
+
+    .resin-btn::before {
+        content: "";
+        position: absolute;
+        top: 7%;
+        left: 10%;
+        right: 10%;
+        height: 34%;
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.03));
+        filter: blur(0.2px);
+        pointer-events: none;
+    }
+
+    .resin-btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.18), transparent 28%),
+            radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.05), transparent 34%);
+        pointer-events: none;
+    }
+
+    .calc-number {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.08) 18%, rgba(255, 255, 255, 0.02) 24%, rgba(0, 0, 0, 0.10) 100%),
+            linear-gradient(180deg, #5d6677 0%, #333b48 100%);
+    }
+
+    .calc-util {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.10) 18%, rgba(255, 255, 255, 0.03) 25%, rgba(0, 0, 0, 0.12) 100%),
+            linear-gradient(180deg, #7b8290 0%, #4d5564 100%);
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .calc-item {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.12) 18%, rgba(255, 255, 255, 0.04) 24%, rgba(0, 0, 0, 0.10) 100%),
+            linear-gradient(180deg, #72c6f1 0%, #2f7ea7 100%);
+        font-size: 1.08rem;
+        letter-spacing: 0.03em;
+    }
+
+    .calc-operator,
+    .calc-equals {
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.11) 18%, rgba(255, 255, 255, 0.03) 25%, rgba(0, 0, 0, 0.10) 100%),
+            linear-gradient(180deg, #ffba3a 0%, #df7d00 100%);
+        color: #fff;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    .calc-equals {
+        font-size: 1.5rem;
+    }
+
+    .calc-btn.is-pressed {
+        transform: translateY(6px) scale(0.985);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.16),
+            inset 0 -6px 10px rgba(0, 0, 0, 0.20),
+            0 2px 0 rgba(17, 20, 27, 0.96),
+            0 6px 12px rgba(0, 0, 0, 0.18);
+        filter: brightness(1.04);
+    }
+
+    .calc-btn.release-bounce {
+        animation: releaseBounce 0.22s ease;
+    }
+
+    @keyframes releaseBounce {
+        0% {
+            transform: translateY(6px) scale(0.985);
+        }
+
+        55% {
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        100% {
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .tap-ripple {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        transform: translate(-50%, -50%) scale(0);
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.18) 38%, rgba(255, 255, 255, 0) 70%);
+        pointer-events: none;
+        animation: tapRipple 0.52s ease-out forwards;
+        mix-blend-mode: screen;
+    }
+
+    @keyframes tapRipple {
+        0% {
+            opacity: 0.75;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(8);
+        }
+    }
+
+    .category-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 6, 12, 0.42);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.24s ease;
+        z-index: 1040;
+    }
+
+    .category-drawer-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .category-drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        padding: 10px 14px 22px;
+        border-radius: 0 0 30px 30px;
+        background:
+            linear-gradient(180deg, rgba(27, 32, 40, 0.96), rgba(17, 21, 28, 0.98));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow: 0 22px 44px rgba(0, 0, 0, 0.35);
+        transform: translateY(-104%);
+        transition: transform 0.28s cubic-bezier(.22, .9, .28, 1);
+        max-height: 78vh;
+        overflow-y: auto;
+    }
+
+    .category-drawer.show {
+        transform: translateY(0);
+    }
+
+    .drawer-handle {
+        width: 54px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.24);
+        margin: 4px auto 12px;
+    }
+
+    .drawer-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .drawer-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .drawer-subtitle {
+        font-size: 0.82rem;
+        color: var(--text-sub);
+        margin-top: 2px;
+    }
+
+    .drawer-close {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 1.05rem;
+    }
+
+    .category-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .category-btn {
+        border: none;
+        background: transparent;
+        padding: 0;
+    }
+
+    .category-btn-inner {
+        min-height: 84px;
+        border-radius: 22px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.07));
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            0 10px 20px rgba(0, 0, 0, 0.16);
+        transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+        overflow: hidden;
+    }
+
+    .category-btn:active .category-btn-inner {
+        transform: translateY(2px) scale(0.985);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 4px 10px rgba(0, 0, 0, 0.16);
+        filter: brightness(1.06);
+    }
+
+    .category-icon-image {
+    width: 100%;
+    max-width: 100%;
+    max-height: 56px;
+    object-fit: contain;
+    display: block;
+    padding: 4px;
+}
+
+    .category-text-only {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        text-align: center;
+        line-height: 1.25;
+    }
+
+    .category-empty-card {
+        grid-column: 1 / -1;
+        border-radius: 24px;
+        padding: 24px 18px;
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 10px 20px rgba(0, 0, 0, 0.16);
+        text-align: center;
+    }
+
+    .category-empty-icon {
+        width: 62px;
+        height: 62px;
+        margin: 0 auto 12px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: #9ae6ff;
+        background:
+            linear-gradient(180deg, rgba(114, 198, 241, 0.22), rgba(47, 126, 167, 0.16));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            0 10px 20px rgba(0, 0, 0, 0.14);
+    }
+
+    .category-empty-title {
+        font-size: 1.04rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 8px;
+    }
+
+    .category-empty-text {
+        font-size: 0.92rem;
+        line-height: 1.65;
+        color: rgba(255, 255, 255, 0.72);
+        margin-bottom: 16px;
+    }
+
+    .category-empty-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 16px;
+        text-decoration: none;
+        color: #fff;
+        font-size: 0.92rem;
+        font-weight: 800;
+        background:
+            linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 8px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .category-empty-link:active {
+        transform: translateY(1px);
+    }
+
+    .save-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at center, rgba(10, 12, 18, 0.10), rgba(6, 8, 12, 0.22));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.20s ease;
+    }
+
+    .save-overlay.show {
+        opacity: 1;
+    }
+
+    .save-ring-wrap {
+        position: relative;
+        width: 154px;
+        height: 154px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: savePopLuxury 0.56s cubic-bezier(.18, .9, .22, 1);
+    }
+
+    .save-aura {
+        position: absolute;
+        inset: -16px;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle,
+                rgba(52, 199, 89, 0.24) 0%,
+                rgba(52, 199, 89, 0.12) 28%,
+                rgba(52, 199, 89, 0.04) 52%,
+                transparent 72%);
+        filter: blur(18px);
+        opacity: 0.95;
+    }
+
+    .save-ring-outer {
+        position: absolute;
+        inset: 2px;
+        border-radius: 50%;
+        background:
+            conic-gradient(from 210deg,
+                rgba(255, 255, 255, 0.18),
+                rgba(255, 255, 255, 0.42),
+                rgba(157, 244, 182, 0.46),
+                rgba(52, 199, 89, 0.58),
+                rgba(255, 255, 255, 0.20));
+        filter: blur(0.5px);
+        opacity: 0.95;
+    }
+
+    .save-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.34), transparent 26%),
+            linear-gradient(180deg, rgba(125, 240, 160, 0.98), rgba(52, 199, 89, 0.98));
+        box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.22),
+            0 0 0 8px rgba(52, 199, 89, 0.08),
+            0 18px 42px rgba(18, 92, 42, 0.30),
+            0 0 36px rgba(52, 199, 89, 0.22);
+    }
+
+    .save-ring-inner-cut {
+        position: absolute;
+        inset: 19px;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(14, 16, 22, 0.90), rgba(8, 10, 14, 0.96));
+        box-shadow:
+            inset 0 2px 8px rgba(0, 0, 0, 0.34),
+            inset 0 -8px 16px rgba(0, 0, 0, 0.28),
+            0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .save-check {
+        position: relative;
+        z-index: 2;
+        font-size: 3.9rem;
+        font-weight: 800;
+        color: #f7fff9;
+        text-shadow:
+            0 0 24px rgba(52, 199, 89, 0.24),
+            0 1px 0 rgba(255, 255, 255, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .save-text {
+        margin-top: 18px;
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: var(--accent-green-soft);
+        letter-spacing: 0.08em;
+        text-shadow:
+            0 0 20px rgba(52, 199, 89, 0.18),
+            0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    @keyframes savePopLuxury {
+        0% {
+            transform: scale(0.62);
+            opacity: 0;
+        }
+
+        46% {
+            transform: scale(1.06);
+            opacity: 1;
+        }
+
+        68% {
+            transform: scale(0.985);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 1100;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+    }
+
+    .bottom-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 48px;
+        border-radius: 16px;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bottom-nav-btn:active {
+        transform: translateY(1px);
+    }
+
+    @media (max-width: 420px) {
+        .page-logo {
+            font-size: 0.94rem;
+            letter-spacing: 0.12em;
+        }
+
+        .calc-btn {
+            height: 68px;
+            font-size: 1.35rem;
+            border-radius: 22px;
+        }
+
+        .calc-item,
+        .calc-util {
+            font-size: 1rem;
+        }
+
+        .calc-inner {
+            padding: 16px 14px 16px;
+        }
+
+        .category-btn-inner {
+            min-height: 78px;
+        }
+
+        .save-ring-wrap {
+            width: 142px;
+            height: 142px;
+        }
+
+        .save-ring-inner-cut {
+            inset: 18px;
+        }
+
+        .save-check {
+            font-size: 3.45rem;
+        }
+
+        .save-text {
+            font-size: 1rem;
+        }
+
+        .today-summary-card {
+            padding: 13px 14px 14px;
+        }
+
+        .today-summary-main {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .today-summary-count {
+            padding-bottom: 0;
+        }
+
+        .category-empty-card {
+            padding: 22px 16px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const amountDisplay = document.getElementById("amount-display");
+        const formulaDisplay = document.getElementById("formula-display");
+        const hiddenAmount = document.getElementById("hidden-amount");
+        const hiddenCategory = document.getElementById("hidden-category");
+        const hiddenEntryDate = document.getElementById("hidden-entry-date");
+        const expenseForm = document.getElementById("expense-form");
+
+        const entryDateInput = document.getElementById("entry-date-input");
+        const entryDateForm = document.getElementById("entry-date-form");
+
+        const summaryAmount = document.getElementById("summary-amount");
+        const summaryCount = document.getElementById("summary-count");
+        const summaryDateText = document.getElementById("summary-date-text");
+        const summaryStateChip = document.getElementById("summary-state-chip");
+
+        const openCategoryBtn = document.getElementById("open-category-btn");
+        const closeCategoryBtn = document.getElementById("close-category-btn");
+        const categoryDrawer = document.getElementById("category-drawer");
+        const categoryBackdrop = document.getElementById("category-drawer-backdrop");
+        const saveOverlay = document.getElementById("save-overlay");
+        const saveText = document.getElementById("save-text");
+
+        const calcButtons = document.querySelectorAll(".calc-btn");
+        const categoryButtons = document.querySelectorAll(".category-btn");
+
+        let currentAmount = "";
+        let selectedCategory = "";
+        let expression = "";
+        let justEvaluated = false;
+
+        function showInlineError(message) {
+            if (window.showPremiumToast) {
+                window.showPremiumToast(message, "error", 2600, "top");
+            } else {
+                alert(message);
+            }
+        }
+
+        function showCreatedToast(message) {
+            if (window.showPremiumToast) {
+                window.showPremiumToast(message || "追加しました", "created", 2400, "top");
+            }
+        }
+
+        function formatYen(value) {
+            if (value === "" || value === null || value === undefined) return "0円";
+            const num = Number(value);
+            if (!isFinite(num)) return "0円";
+            return Math.floor(num).toLocaleString("ja-JP") + "円";
+        }
+
+        function safeEval(expr) {
+            if (!expr) return "";
+            if (!/^[0-9+\-*/. ]+$/.test(expr)) return "";
+            try {
+                const result = Function('"use strict"; return (' + expr + ')')();
+                if (!isFinite(result)) return "";
+                return result;
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function updateDisplay() {
+            const displayValue = currentAmount !== "" ? currentAmount : "0";
+            const numeric = Number(displayValue);
+
+            if (displayValue === "." || Number.isNaN(numeric)) {
+                amountDisplay.textContent = displayValue;
+            } else {
+                amountDisplay.textContent = formatYen(numeric);
+            }
+
+            formulaDisplay.textContent = expression
+                ? expression.replace(/\*/g, "×").replace(/\//g, "÷")
+                : "\u00A0";
+
+            hiddenAmount.value = currentAmount !== "" && !Number.isNaN(Number(currentAmount))
+                ? Math.floor(Number(currentAmount))
+                : "";
+        }
+
+        function clearAll() {
+            currentAmount = "";
+            expression = "";
+            justEvaluated = false;
+            updateDisplay();
+        }
+
+        function deleteOne() {
+            if (justEvaluated) {
+                justEvaluated = false;
+            }
+            currentAmount = currentAmount.slice(0, -1);
+            updateDisplay();
+        }
+
+        function appendNumber(value) {
+            if (justEvaluated && expression === "") {
+                currentAmount = "";
+                justEvaluated = false;
+            }
+
+            if (value === "." && currentAmount.includes(".")) return;
+
+            if (value === "." && currentAmount === "") {
+                currentAmount = "0.";
+            } else if (value === "00") {
+                if (currentAmount === "") {
+                    currentAmount = "0";
+                } else {
+                    currentAmount += "00";
+                }
+            } else {
+                currentAmount += value;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentAmount === "" && expression === "") return;
+
+            if (currentAmount !== "") {
+                expression += currentAmount;
+                currentAmount = "";
+            }
+
+            expression = expression.trim();
+
+            if (/[+\-*/]$/.test(expression)) {
+                expression = expression.slice(0, -1) + op;
+            } else {
+                expression += op;
+            }
+
+            justEvaluated = false;
+            updateDisplay();
+        }
+
+        function calculateOnly() {
+            let expr = expression;
+
+            if (currentAmount !== "") {
+                expr += currentAmount;
+            }
+
+            expr = expr.trim();
+            if (!expr) return;
+
+            const result = safeEval(expr);
+            if (result === "") {
+                showInlineError("計算できませんでした");
+                return;
+            }
+
+            currentAmount = String(result);
+            expression = "";
+            justEvaluated = true;
+            updateDisplay();
+        }
+
+        function createRipple(button, clientX, clientY) {
+            const rect = button.getBoundingClientRect();
+            const ripple = document.createElement("span");
+            ripple.className = "tap-ripple";
+            ripple.style.left = (clientX - rect.left) + "px";
+            ripple.style.top = (clientY - rect.top) + "px";
+            button.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 520);
+        }
+
+        function attachPressEffect(button) {
+            const pressStart = (e) => {
+                button.classList.remove("release-bounce");
+                button.classList.add("is-pressed");
+
+                let clientX = button.getBoundingClientRect().left + button.offsetWidth / 2;
+                let clientY = button.getBoundingClientRect().top + button.offsetHeight / 2;
+
+                if (e.touches && e.touches[0]) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else if (typeof e.clientX === "number") {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+
+                createRipple(button, clientX, clientY);
+            };
+
+            const pressEnd = () => {
+                if (button.classList.contains("is-pressed")) {
+                    button.classList.remove("is-pressed");
+                    button.classList.add("release-bounce");
+                    setTimeout(() => button.classList.remove("release-bounce"), 220);
+                }
+            };
+
+            button.addEventListener("touchstart", pressStart, { passive: true });
+            button.addEventListener("mousedown", pressStart);
+            button.addEventListener("touchend", pressEnd);
+            button.addEventListener("touchcancel", pressEnd);
+            button.addEventListener("mouseup", pressEnd);
+            button.addEventListener("mouseleave", pressEnd);
+        }
+
+        calcButtons.forEach(attachPressEffect);
+
+        function openDrawer() {
+            const categoryCount = Number(openCategoryBtn.dataset.categoryCount || 0);
+            const createUrl = openCategoryBtn.dataset.categoryCreateUrl;
+
+            if (categoryCount === 0) {
+                window.location.href = createUrl;
+                return;
+            }
+
+            categoryDrawer.classList.add("show");
+            categoryBackdrop.classList.add("show");
+        }
+
+        function closeDrawer() {
+            categoryDrawer.classList.remove("show");
+            categoryBackdrop.classList.remove("show");
+        }
+
+        openCategoryBtn.addEventListener("click", openDrawer);
+        closeCategoryBtn.addEventListener("click", closeDrawer);
+        categoryBackdrop.addEventListener("click", closeDrawer);
+
+        if (entryDateInput && entryDateForm) {
+            entryDateInput.addEventListener("change", function () {
+                if (hiddenEntryDate) {
+                    hiddenEntryDate.value = this.value;
+                }
+                entryDateForm.submit();
+            });
+        }
+
+        function triggerSaveCelebration() {
+            saveOverlay.classList.remove("show");
+            void saveOverlay.offsetWidth;
+            saveOverlay.classList.add("show");
+
+            if (saveText) {
+                saveText.textContent = "入力しました";
+            }
+
+            if (navigator.vibrate) {
+                navigator.vibrate(28);
+            }
+
+            setTimeout(() => {
+                saveOverlay.classList.remove("show");
+            }, 980);
+        }
+
+        function updateSummaryCard(data) {
+            if (summaryAmount) {
+                summaryAmount.textContent = formatYen(data.selected_day_total || 0);
+            }
+
+            if (summaryCount) {
+                summaryCount.textContent = `${data.selected_day_count || 0}件`;
+            }
+
+            if (summaryDateText && data.selected_date) {
+                const d = new Date(data.selected_date + "T00:00:00");
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                const day = d.getDate();
+                summaryDateText.textContent = `${y}年${m}月${day}日`;
+            }
+
+            if (summaryStateChip) {
+                summaryStateChip.textContent = data.is_today_input_date ? "TODAY" : "PAST";
+                summaryStateChip.classList.toggle("is-today", !!data.is_today_input_date);
+                summaryStateChip.classList.toggle("is-past", !data.is_today_input_date);
+            }
+        }
+
+        async function saveExpense() {
+            const numericAmount = hiddenAmount.value;
+
+            if (!numericAmount || Number(numericAmount) <= 0) {
+                showInlineError("金額を入力してください");
+                return;
+            }
+
+            if (!hiddenCategory.value) {
+                showInlineError("項目を選択してください");
+                return;
+            }
+
+            if (!hiddenEntryDate.value) {
+                showInlineError("日付が正しくありません");
+                return;
+            }
+
+            const formData = new FormData(expenseForm);
+
+            try {
+                const res = await fetch(expenseForm.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok || !data) {
+                    showInlineError("保存に失敗しました");
+                    return;
+                }
+
+                if (data.success) {
+                    updateSummaryCard(data);
+                    triggerSaveCelebration();
+
+
+
+                    currentAmount = "";
+                    expression = "";
+                    justEvaluated = false;
+                    hiddenCategory.value = "";
+                    selectedCategory = "";
+                    updateDisplay();
+                } else {
+                    showInlineError(data.error || "保存に失敗しました");
+                }
+            } catch (e) {
+                console.error("save error:", e);
+                showInlineError("通信エラーです");
+            }
+        }
+
+        document.querySelectorAll(".calc-number").forEach(btn => {
+            btn.addEventListener("click", function () {
+                appendNumber(this.dataset.value);
+            });
+        });
+
+        document.querySelectorAll(".calc-operator").forEach(btn => {
+            btn.addEventListener("click", function () {
+                appendOperator(this.dataset.value);
+            });
+        });
+
+        document.querySelector('[data-action="clear"]').addEventListener("click", clearAll);
+        document.querySelector('[data-action="delete"]').addEventListener("click", deleteOne);
+        document.querySelector('[data-action="equals"]').addEventListener("click", calculateOnly);
+
+        categoryButtons.forEach(btn => {
+            btn.addEventListener("click", async function () {
+                selectedCategory = this.dataset.categoryId;
+                hiddenCategory.value = selectedCategory;
+
+                closeDrawer();
+                await saveExpense();
+            });
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (/^[0-9]$/.test(e.key)) {
+                appendNumber(e.key);
+            } else if (e.key === ".") {
+                appendNumber(".");
+            } else if (e.key === "+") {
+                appendOperator("+");
+            } else if (e.key === "-") {
+                appendOperator("-");
+            } else if (e.key === "*") {
+                appendOperator("*");
+            } else if (e.key === "/") {
+                appendOperator("/");
+            } else if (e.key === "Enter" || e.key === "=") {
+                e.preventDefault();
+                calculateOnly();
+            } else if (e.key === "Backspace") {
+                deleteOne();
+            } else if (e.key === "Escape") {
+                clearAll();
+                closeDrawer();
+            }
+        });
+
+        updateDisplay();
+    });
+</script>
+{% endblock %}
