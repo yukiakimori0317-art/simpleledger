@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from .models import AppSetting, Category, Expense
 
 
@@ -78,3 +80,45 @@ class AppSettingForm(forms.ModelForm):
                 "placeholder": "例: 25",
             }),
         }
+
+class SignUpForm(UserCreationForm):
+    username = forms.CharField(
+        label="ユーザー名",
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "ユーザー名",
+            "autocomplete": "username",
+        }),
+    )
+    password1 = forms.CharField(
+        label="パスワード",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "パスワード",
+            "autocomplete": "new-password",
+        }),
+    )
+    password2 = forms.CharField(
+        label="パスワード（確認）",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "パスワード（確認）",
+            "autocomplete": "new-password",
+        }),
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "password1", "password2"]
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username", "").strip()
+
+        if not username:
+            raise forms.ValidationError("ユーザー名を入力してください。")
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("このユーザー名は既に使われています。")
+
+        return username

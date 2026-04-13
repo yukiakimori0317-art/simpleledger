@@ -7,7 +7,8 @@
     <title>{% block title %}SimpleLedger{% endblock %}</title>
 
     {% load static %}
-<link rel="manifest" href="{% url 'kakeibo:pwa_manifest' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    
 <meta name="theme-color" content="#171c25">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -549,7 +550,7 @@
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", function () {
-                navigator.serviceWorker.register("{% url 'kakeibo:service_worker' %}", { scope: "/" })
+                navigator.serviceWorker.register("{% static 'js/service-worker.js' %}")
                     .then(function (registration) {
                         console.log("Service Worker registered:", registration.scope);
                     })

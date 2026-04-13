@@ -17,6 +17,9 @@ from .models import AppSetting, Category, Expense
 from django.http import HttpResponse
 from django.templatetags.static import static
 
+from django.shortcuts import render, redirect
+from .forms import SignUpForm
+
 
 def flash_created(request, message):
     messages.success(request, message, extra_tags="created")
@@ -737,14 +740,14 @@ def signup(request):
         return redirect("kakeibo:index")
 
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             flash_created(request, "登録が完了しました")
             return redirect("kakeibo:index")
     else:
-        form = UserCreationForm()
+        form = SignUpForm()
 
     return render(request, "registration/signup.html", {"form": form})
 
