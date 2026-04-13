@@ -400,7 +400,7 @@
         position: relative;
         z-index: 1;
         display: grid;
-        grid-template-columns: 42px 1fr 42px;
+        grid-template-columns: 42px minmax(0, 1fr) 42px;
         gap: 10px;
         align-items: center;
     }
@@ -437,6 +437,7 @@
 
     .entry-date-input {
         width: 100%;
+        min-width: 0;
         height: 46px;
         border-radius: 15px;
         border: 1px solid rgba(255, 255, 255, 0.12);
