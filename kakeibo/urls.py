@@ -33,6 +33,6 @@ urlpatterns = [
     'accounts/logout/',
     auth_views.LogoutView.as_view(next_page='kakeibo:login'),
     name='logout'
-),, auth_views.LogoutView.as_view(), name='logout'),
+),
 ]
 
