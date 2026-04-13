@@ -14,6 +14,9 @@ from django.utils import timezone
 from .forms import AppSettingForm, CategoryForm, ExpenseEditForm
 from .models import AppSetting, Category, Expense
 
+from django.http import HttpResponse
+from django.templatetags.static import static
+
 
 def flash_created(request, message):
     messages.success(request, message, extra_tags="created")
@@ -744,3 +747,102 @@ def signup(request):
         form = UserCreationForm()
 
     return render(request, "registration/signup.html", {"form": form})
+
+
+def pwa_manifest(request):
+    manifest = f"""
+{{
+  "name": "SimpleLedger",
+  "short_name": "SimpleLedger",
+  "description": "スマホで素早く入力できる家計簿アプリ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#171c25",
+  "theme_color": "#171c25",
+  "orientation": "portrait",
+  "lang": "ja",
+  "icons": [
+    {{
+      "src": "{static('icons/icon-192.png')}",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }},
+    {{
+      "src": "{static('icons/icon-512.png')}",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }}
+  ]
+}}
+""".strip()
+    return HttpResponse(manifest, content_type="application/manifest+json")
+
+
+def service_worker(request):
+    js = f"""
+const CACHE_NAME = "simpleledger-v1";
+const APP_SHELL = [
+  "/",
+  "/summary/",
+  "/month-history/",
+  "/history/",
+  "/accounts/login/",
+  "/accounts/signup/",
+  "{static('icons/icon-192.png')}",
+  "{static('icons/icon-512.png')}",
+];
+
+self.addEventListener("install", (event) => {{
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+  );
+  self.skipWaiting();
+}});
+
+self.addEventListener("activate", (event) => {{
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+  self.clients.claim();
+}});
+
+self.addEventListener("fetch", (event) => {{
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {{
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(request)
+        .then((networkResponse) => {{
+          if (
+            request.url.startsWith(self.location.origin) &&
+            networkResponse &&
+            networkResponse.status === 200
+          ) {{
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {{
+              cache.put(request, responseClone);
+            }});
+          }}
+          return networkResponse;
+        }})
+        .catch(() => {{
+          return caches.match("/");
+        }});
+    }})
+  );
+}});
+""".strip()
+    return HttpResponse(js, content_type="application/javascript")

@@ -33,6 +33,10 @@ urlpatterns = [
     'accounts/logout/',
     auth_views.LogoutView.as_view(next_page='kakeibo:login'),
     name='logout'
-),
+    ),
+    path("manifest.webmanifest", views.pwa_manifest, name="pwa_manifest"),
+    path("service-worker.js", views.service_worker, name="service_worker"),
+        
+
 ]
 
