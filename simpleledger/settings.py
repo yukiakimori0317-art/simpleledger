@@ -10,8 +10,7 @@ SECRET_KEY = os.environ.get(
     "django-insecure-x0rk(-_uw*d1%tzy9izh+zuzb!etw2wi#nsxyw7p&cx)8lvth9"
 )
 
-# ローカル確認中は True にする
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
@@ -96,6 +95,12 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'kakeibo:login'
@@ -109,5 +114,3 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "warning",
     message_constants.ERROR: "error",
 }
-
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
