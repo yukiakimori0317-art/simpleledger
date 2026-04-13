@@ -17,7 +17,11 @@
         }
 
         body {
-            background-color: #f8f9fa;
+            background:
+                radial-gradient(circle at top, rgba(80, 95, 130, 0.22) 0%, transparent 34%),
+                linear-gradient(180deg, #10141b 0%, #171c25 45%, #1c2230 100%);
+            min-height: 100vh;
+            color: #f4f7fb;
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
             font-family:
@@ -44,10 +48,120 @@
             border-radius: 0.75rem;
         }
 
+        /* ===== Topbar ===== */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: calc(12px + env(safe-area-inset-top)) 16px 10px;
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.10) 0%,
+                    rgba(255, 255, 255, 0.04) 100%),
+                rgba(18, 22, 30, 0.58);
+            backdrop-filter: blur(18px) saturate(150%);
+            -webkit-backdrop-filter: blur(18px) saturate(150%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 10px 24px rgba(0, 0, 0, 0.14),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .app-brand {
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            line-height: 1;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.20);
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        /* ===== iPhone風 小さめガラスログアウトボタン ===== */
+        .iphone-logout-btn {
+            appearance: none;
+            -webkit-appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            min-height: 36px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            color: #fff;
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            line-height: 1;
+
+            background:
+                linear-gradient(180deg,
+                    rgba(255,255,255,0.26) 0%,
+                    rgba(255,255,255,0.12) 24%,
+                    rgba(255,255,255,0.06) 100%),
+                rgba(45, 52, 66, 0.46);
+
+            backdrop-filter: blur(16px) saturate(155%);
+            -webkit-backdrop-filter: blur(16px) saturate(155%);
+
+            box-shadow:
+                0 10px 24px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.24),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+
+            transition:
+                transform 0.14s ease,
+                box-shadow 0.14s ease,
+                opacity 0.14s ease,
+                filter 0.14s ease;
+
+            white-space: nowrap;
+        }
+
+        .iphone-logout-btn:hover {
+            filter: brightness(1.06);
+        }
+
+        .iphone-logout-btn:active {
+            transform: scale(0.96);
+            box-shadow:
+                0 6px 14px rgba(0, 0, 0, 0.16),
+                inset 0 2px 6px rgba(0, 0, 0, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .iphone-logout-btn:focus-visible {
+            outline: none;
+            box-shadow:
+                0 0 0 3px rgba(123, 184, 255, 0.28),
+                0 10px 24px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.24);
+        }
+
+        .logout-icon {
+            font-size: 0.95rem;
+            line-height: 1;
+            opacity: 0.92;
+            transform: translateY(-0.5px);
+        }
+
+        main {
+            padding-top: 4px;
+        }
+
         /* ===== Toast stack ===== */
         .toast-stack {
             position: fixed;
-            top: max(14px, env(safe-area-inset-top));
+            top: max(14px, calc(env(safe-area-inset-top) + 56px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 5000;
@@ -59,7 +173,6 @@
             pointer-events: none;
         }
 
-        /* 中央表示したいときに使える */
         .toast-stack.center {
             top: 50%;
             transform: translate(-50%, -50%);
@@ -267,9 +380,28 @@
         }
 
         @media (max-width: 420px) {
+            .topbar {
+                padding: calc(10px + env(safe-area-inset-top)) 14px 8px;
+            }
+
+            .app-brand {
+                font-size: 1rem;
+            }
+
+            .iphone-logout-btn {
+                min-height: 34px;
+                padding: 0 11px;
+                font-size: 0.8rem;
+                gap: 6px;
+            }
+
+            .logout-icon {
+                font-size: 0.9rem;
+            }
+
             .toast-stack {
                 width: calc(100% - 22px);
-                top: max(10px, env(safe-area-inset-top));
+                top: max(10px, calc(env(safe-area-inset-top) + 52px));
             }
 
             .floating-toast {
@@ -290,6 +422,19 @@
 </head>
 
 <body>
+    <div class="topbar">
+        <div class="app-brand">SimpleLedger</div>
+
+        {% if user.is_authenticated %}
+        <form action="{% url 'kakeibo:logout' %}" method="post" class="logout-form">
+            {% csrf_token %}
+            <button type="submit" class="iphone-logout-btn" aria-label="ログアウト">
+                <span class="logout-icon"><i class="bi bi-box-arrow-right"></i></span>
+                <span>ログアウト</span>
+            </button>
+        </form>
+        {% endif %}
+    </div>
 
     {% if messages %}
     <div class="toast-stack" id="toast-stack-server">
