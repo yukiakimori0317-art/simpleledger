@@ -4,7 +4,8 @@ from django.db import models
 from django.utils import timezone
 
 
-# 支出の分類を保存
+# カテゴリ1件ごとに、そのカテゴリの持ち主ユーザーを保存する
+#カテゴリ自体に owner が入る
 class Category(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -34,7 +35,7 @@ class AppSetting(models.Model):
         return f"集計開始日: {self.cycle_start_day}日"
 
 
-# 実際の支出を保存
+# 支出1件ごとに、誰のものか、どのカテゴリか
 class Expense(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

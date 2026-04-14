@@ -16,6 +16,7 @@ class ExpenseForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+    #カテゴリーの所有者(owner)が、現在操作しているuserであるもの」だけに絞り込む
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
@@ -37,6 +38,7 @@ class ExpenseEditForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+     #自分のカテゴリしか編集できないようにする
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
