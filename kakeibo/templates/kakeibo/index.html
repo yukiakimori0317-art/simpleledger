@@ -22,11 +22,12 @@
                         </div>
                     </div>
 
-                    <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}" id="summary-state-chip">
+                    <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}"
+                        id="summary-state-chip">
                         {% if is_today_input_date %}
-                            TODAY
+                        TODAY
                         {% else %}
-                            PAST
+                        PAST
                         {% endif %}
                     </div>
                 </div>
@@ -43,41 +44,38 @@
                 <div class="today-summary-divider"></div>
 
                 <div class="today-summary-bottom">
-                    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn" aria-label="前日">
+                    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
+                        aria-label="前日">
                         <i class="bi bi-chevron-left"></i>
                     </a>
 
                     <form method="get" class="entry-date-form" id="entry-date-form">
-                        <input
-                            type="date"
-                            name="date"
-                            id="entry-date-input"
-                            class="entry-date-input"
-                            value="{{ target_date|date:'Y-m-d' }}"
-                            max="{{ today|date:'Y-m-d' }}"
-                        >
+                        <input type="date" name="date" id="entry-date-input" class="entry-date-input"
+                            value="{{ target_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
                     </form>
 
                     {% if can_go_next %}
-                        <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn" aria-label="翌日">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
+                    <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn"
+                        aria-label="翌日">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                     {% else %}
-                        <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
-                            <i class="bi bi-chevron-right"></i>
-                        </button>
+                    <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
                     {% endif %}
                 </div>
 
                 <div class="today-summary-actions">
                     {% if not is_today_input_date %}
-                        <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                            <span>今日に戻す</span>
-                        </a>
+                    <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>今日に戻す</span>
+                    </a>
                     {% endif %}
 
-                    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}" class="mini-action-btn mini-action-history">
+                    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
+                        class="mini-action-btn mini-action-history">
                         <i class="bi bi-clock-history"></i>
                         <span>この日の履歴</span>
                     </a>
@@ -95,19 +93,16 @@
                     {% csrf_token %}
                     <input type="hidden" name="amount" id="hidden-amount">
                     <input type="hidden" name="category" id="hidden-category">
-                    <input type="hidden" name="entry_date" id="hidden-entry-date" value="{{ target_date|date:'Y-m-d' }}">
+                    <input type="hidden" name="entry_date" id="hidden-entry-date"
+                        value="{{ target_date|date:'Y-m-d' }}">
                 </form>
 
                 <div class="calculator-grid">
                     <button type="button" class="calc-btn calc-util resin-btn" data-action="clear">AC</button>
                     <button type="button" class="calc-btn calc-util resin-btn" data-action="delete">Del</button>
-                    <button
-                        type="button"
-                        class="calc-btn calc-item resin-btn"
-                        id="open-category-btn"
+                    <button type="button" class="calc-btn calc-item resin-btn" id="open-category-btn"
                         data-category-count="{{ categories|length }}"
-                        data-category-create-url="{% url 'kakeibo:category_create' %}"
-                    >
+                        data-category-create-url="{% url 'kakeibo:category_create' %}">
                         項目
                     </button>
                     <button type="button" class="calc-btn calc-operator resin-btn" data-value="/">÷</button>
@@ -824,13 +819,13 @@
     }
 
     .category-icon-image {
-    width: 100%;
-    max-width: 100%;
-    max-height: 56px;
-    object-fit: contain;
-    display: block;
-    padding: 4px;
-}
+        width: 100%;
+        max-width: 100%;
+        max-height: 56px;
+        object-fit: contain;
+        display: block;
+        padding: 4px;
+    }
 
     .category-text-only {
         font-size: 1rem;
