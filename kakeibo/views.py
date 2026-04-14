@@ -370,7 +370,8 @@ def category_create(request):
         if form.is_valid():#文字数OK？必須項目OK？
             category = form.save(commit=False)#まだDBに保存しない
             category.owner = request.user #ユーザー紐づけ
-            category.save()ここでDBに保存
+            category.save()#
+            #ここでDBに保存
             flash_created(request, "項目を追加しました")
 
             #最初だけ入力画面に飛ばす
