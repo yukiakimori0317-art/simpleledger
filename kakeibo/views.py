@@ -144,16 +144,16 @@ def get_summary_year_choices(user, today_year):
 def parse_entry_date(date_str):
     today = timezone.localdate()
 
-    #空チェック
+    # 空チェック
     if not date_str:
         return today
 
-    try:def ajax_add_expens
+    try:
         parsed = date.fromisoformat(date_str)
-    #エラー対策 今日に戻す
     except ValueError:
         return today
-    #家計簿だから、未来日はいらない
+
+    # 家計簿だから、未来日は入れない
     if parsed > today:
         return today
 
@@ -304,10 +304,8 @@ def ajax_add_expense(request):
 
     #ログイン中のユーザーのものか確認してからカテゴリを取得
     category = get_object_or_404(Category, pk=category_id, owner=request.user)
-
-
-   #ここで実際にDBに保存　支出データを新しく作る本体
-   expense = Expense.objects.create(
+    #ここで実際にDBに保存　支出データを新しく作る本体
+    expense = Expense.objects.create(
         owner=request.user,  #誰のデータ
         category=category,   #どの項目
         amount=amount_int,   #いくらか
