@@ -1,3 +1,5 @@
+#ログイン中の人に、他人のカテゴリを見せないための場所
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -16,7 +18,6 @@ class ExpenseForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-    #カテゴリーの所有者(owner)が、現在操作しているuserであるもの」だけに絞り込む
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
@@ -38,7 +39,6 @@ class ExpenseEditForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-     #自分のカテゴリしか編集できないようにする
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
@@ -50,7 +50,7 @@ class ExpenseEditForm(forms.ModelForm):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["name", "budget"]
+        fields = ["name", "budget", "icon"]
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-control",
@@ -62,7 +62,11 @@ class CategoryForm(forms.ModelForm):
                 "min": "0",
                 "step": "1",
             }),
-
+            "icon": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "id": "id_icon",
+                "accept": "image/*",
+            }),
         }
 
 

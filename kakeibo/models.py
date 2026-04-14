@@ -5,7 +5,6 @@ from django.utils import timezone
 
 
 # カテゴリ1件ごとに、そのカテゴリの持ち主ユーザーを保存する
-#カテゴリ自体に owner が入る
 class Category(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -16,7 +15,12 @@ class Category(models.Model):
     name = models.CharField("項目名", max_length=20)
     budget = models.PositiveIntegerField("月予算", default=0)
 
-
+    icon = models.ImageField(
+        "ロゴ画像",
+        upload_to="category_icons/",
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
@@ -35,7 +39,7 @@ class AppSetting(models.Model):
         return f"集計開始日: {self.cycle_start_day}日"
 
 
-# 支出1件ごとに、誰のものか、どのカテゴリか
+# 実際の支出を保存
 class Expense(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

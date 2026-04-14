@@ -20,8 +20,7 @@ from django.templatetags.static import static
 from django.shortcuts import render, redirect
 from .forms import SignUpForm
 
-
-#フラッシュメッセージ(通知)　extra_tags="created"→cssで色変えるため
+#フラッシュメッセージ（通知）
 def flash_created(request, message):
     messages.success(request, message, extra_tags="created")
 
@@ -33,11 +32,11 @@ def flash_updated(request, message):
 def flash_deleted(request, message):
     messages.error(request, message, extra_tags="deleted")
 
-#アプリの設定を必ず1件取得する
+
+#アプリの設定を必ず1件取得する（なければ作る）
 def get_app_setting():
     setting, _ = AppSetting.objects.get_or_create(pk=1, defaults={"cycle_start_day": 1})
     return setting
-
 
 #ログイン中の人のデータだけ取る
 def get_preferred_categories(user):
@@ -45,7 +44,7 @@ def get_preferred_categories(user):
         expense_count=Count("expenses")
     ).order_by("-expense_count", "name", "id")
 
-#月の開始日を自由にする
+#月の開始日を自由に決める
 def get_cycle_range(target_date, cycle_start_day):
     current_month_last_day = monthrange(target_date.year, target_date.month)[1]
     this_month_start_day = min(cycle_start_day, current_month_last_day)
@@ -80,22 +79,25 @@ def get_cycle_range(target_date, cycle_start_day):
 
     return start_date, end_date
 
+#前の月と次の月を計算する　今の月の１日(基準)をつくる
+def get_month_navigation(year, month):
+    current_first = date(year, month, 1)
 
-def get_month_navigation(year, month):  #前の月と次の月を計算する
-    current_first = date(year, month, 1)  #今の月の1日を作る　基準日
-
-    prev_last = current_first - timedelta(days=1) #1日前に戻る
-    prev_year = prev_last.year   #年と月を取り出す　年またぎも自動で対応
+    prev_last = current_first - timedelta(days=1) #前の月の最終日
+    prev_year = prev_last.year    #年と月を取り出す　年またぎも対応
     prev_month = prev_last.month
 
+    #12月だけ特別処理　年が変わるから
     if month == 12:
         next_year = year + 1
         next_month = 1
+    #それ以外は普通に+1
     else:
         next_year = year
         next_month = month + 1
 
     return prev_year, prev_month, next_year, next_month
+
 
 #URLやフォームの年月を安全な数字に変換する
 def parse_year_month(year_str, month_str):
@@ -104,48 +106,55 @@ def parse_year_month(year_str, month_str):
     try:
         year = int(year_str) if year_str else today.year
         month = int(month_str) if month_str else today.month
+    #エラー対策
     except (TypeError, ValueError):
         return today.year, today.month
 
+    #月の範囲チェック
     if month < 1 or month > 12:
         month = today.month
-
+    #年の範囲チェック
     if year < 2000:
         year = today.year
 
     return year, month
 
+
 #年の選択肢（プルダウン）を作る
 def get_summary_year_choices(user, today_year):
-    #データから年を取得　DBからこの人が使ってる年だけ取る
+    #「この人が使ってる年」だけ取る
     expense_years = list(
         Expense.objects.filter(owner=user).dates("date", "year", order="ASC")
     )
     years = sorted({d.year for d in expense_years} | {today_year})
 
-    if not years:   #初回データゼロでも動く
-        base_year = today_year #一番新しい年を基準にする
+    #一番新しい年を基準にする
+    if not years:
+        base_year = today_year
     else:
         base_year = max(years)
 
-    start_year = base_year - 3  #前後3年くらいで
+    #前後３年くらいにした
+    start_year = base_year - 3
     end_year = base_year + 3
 
     return list(range(start_year, end_year + 1))
 
-#絶対に安全な日付しか通さないフィルター
+#日付を安全に変換する（未来日は禁止）
 def parse_entry_date(date_str):
-    today = timezone.localdate()  #今日の日付を取得
+    today = timezone.localdate()
 
-    if not date_str:    #空チェック　今日の日付を使う
+    #空チェック
+    if not date_str:
         return today
 
-    try:
+    try:def ajax_add_expens
         parsed = date.fromisoformat(date_str)
+    #エラー対策 今日に戻す
     except ValueError:
-        return today   #今日の日付を使う
-
-    if parsed > today:  #未来日はありえない
+        return today
+    #家計簿だから、未来日はいらない
+    if parsed > today:
         return today
 
     return parsed
@@ -153,14 +162,14 @@ def parse_entry_date(date_str):
 
 @login_required
 def index(request):
-    categories = get_preferred_categories(request.user) #カテゴリ取得
+    categories = get_preferred_categories(request.user)#カテゴリ取得
 
     today = timezone.localdate()
     target_date = parse_entry_date(
         request.GET.get("date") or request.POST.get("entry_date")
     )
 
-   #その日付の支出のうち、ログイン中ユーザーのものだけ
+    #今日のデータ取得
     selected_day_expenses = Expense.objects.filter(
         owner=request.user,
         date=target_date
@@ -175,7 +184,7 @@ def index(request):
     next_input_date = target_date + timedelta(days=1)
     can_go_next = next_input_date <= today
 
-    if request.method == "POST":
+    if request.method == "POST":  #ここで保存
         amount = request.POST.get("amount")
         category_id = request.POST.get("category")
         entry_date = parse_entry_date(request.POST.get("entry_date"))
@@ -250,6 +259,7 @@ def index(request):
 
         return redirect(f"{request.path}?date={entry_date.isoformat()}")
 
+    #HTMLにデータ渡して表示
     return render(request, "kakeibo/index.html", {
         "categories": categories,
         "today": today,
@@ -262,20 +272,23 @@ def index(request):
         "is_today_input_date": target_date == today,
     })
 
-#入力された支出をDBに保存して、結果をJSONで返す
+#Ajax保存(入力された支出をDBに保存して、結果をJSONで返す)
+#入力された支出を安全に保存して、画面更新に必要な情報をまとめて返す処理
 @login_required
-#URLを直接開いて GET でアクセスした場合は、保存処理をしない
-def ajax_add_expense(request):#Ajax保存 画面リロードなし
+def ajax_add_expense(request):
+    #保存処理はPOSTで 405→その方法では使えません
     if request.method != "POST":
-        return JsonResponse({"success": False, "error": "POST only"}, status=405)#405その方法ではつかえません
+        return JsonResponse({"success": False, "error": "POST only"}, status=405)
 
+    #金額・項目ID・入力日を受け取る　日付は空・不正な文字・未来日は今日に補正される
     amount = request.POST.get("amount")
     category_id = request.POST.get("category")
     entry_date = parse_entry_date(request.POST.get("entry_date"))
 
+    #その方法では使えません 400→送られた内容が正しくない
     if not amount:
-        return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)#400送られた内容が正しくない
-
+        return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
+    #金額を数値に変換　小数がきても、整数にして保存
     try:
         amount_int = int(float(amount))
     except ValueError:
@@ -284,35 +297,35 @@ def ajax_add_expense(request):#Ajax保存 画面リロードなし
     if amount_int <= 0:
         return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
 
-    #項目未選択は禁止
+    
+    #項目未選択を禁止
     if not category_id:
         return JsonResponse({"success": False, "error": "項目を選択してください"}, status=400)
 
-    #カテゴリを取得する
-    #そのカテゴリがログイン中のユーザーのものか
+    #ログイン中のユーザーのものか確認してからカテゴリを取得
     category = get_object_or_404(Category, pk=category_id, owner=request.user)
 
-    #ここで実際にDBへ保存
-    expense = Expense.objects.create(
-        owner=request.user,   #誰のデータか
-        category=category,    #どの項目か
-        amount=amount_int,    #いくらか
-        date=entry_date,      #いつの支出か
-    )
 
-    #保存後、すぐ
-    # その日の再集計をする
+   #ここで実際にDBに保存　支出データを新しく作る本体
+   expense = Expense.objects.create(
+        owner=request.user,  #誰のデータ
+        category=category,   #どの項目
+        amount=amount_int,   #いくらか
+        date=entry_date,     #いつの支出
+    )
+    #保存したら、その日の合計と件数をすぐ再計算して返す
     selected_day_qs = Expense.objects.filter(owner=request.user, date=entry_date)
     selected_day_total = selected_day_qs.aggregate(total=Sum("amount"))["total"] or 0
     selected_day_count = selected_day_qs.count()
 
-    today = timezone.localdate() #今日かどうか
+    #今日かどうか　フロント側へ伝えて画面表示の分岐にする
+    today = timezone.localdate()
 
     return JsonResponse({
         #保存成功
         "success": True,
         "expense_id": expense.id,
-        #保存した内容
+        #何を保存したか
         "amount": expense.amount,
         "category_name": category.name,
         "date": expense.date.isoformat(),
@@ -321,7 +334,7 @@ def ajax_add_expense(request):#Ajax保存 画面リロードなし
         "selected_day_count": selected_day_count,
         "selected_date": entry_date.isoformat(),
         "selected_date_display": f"{entry_date.month}/{entry_date.day}",
-        "is_today_input_date": entry_date == today, #今の入力が今日か、フロント側に教える
+        "is_today_input_date": entry_date == today,
         #フロント側でトーストや演出を出すための材料
         "toast": {
             "message": "追加しました",
@@ -330,116 +343,135 @@ def ajax_add_expense(request):#Ajax保存 画面リロードなし
         }
     })
 
-
+#カテゴリ一覧を表示しつつ、設定も更新できる画面
 @login_required
-#カテゴリ一覧を表示して、設定も更新できる
 def category_list(request):
-    setting = get_app_setting() #必ず1件ある設定を取得
+    setting = get_app_setting()  #必ず1件ある設定を取得
 
-    if request.method == "POST": #POSTなら設定更新
-        cycle_form = AppSettingForm(request.POST, instance=setting)#既存のsettingを更新する
-        if cycle_form.is_valid(): #フォームのチェック
-            cycle_form.save() #DB更新
+    if request.method == "POST":  #POSTなら設定更新
+        #既存のsettingを更新する
+        cycle_form = AppSettingForm(request.POST, instance=setting)
+        #1~31の範囲か？数字か？
+        if cycle_form.is_valid():
+            #DB更新
+            cycle_form.save()
+            #トースト表示
             flash_updated(request, "集計開始日を更新しました")
             return redirect("kakeibo:category_list")
+    
+    #現在の値をフォームに入れる
     else:
-        cycle_form = AppSettingForm(instance=setting)#現在の値をフォームに入れる
-    #自分のカテゴリだけ、カテゴリごとの使用回数を数えてる
+        cycle_form = AppSettingForm(instance=setting)
+
+    #自分のカテゴリだけ
     categories = Category.objects.filter(owner=request.user).annotate(
-        expense_count=Count("expenses")
-    ).order_by("-expense_count", "name", "id")#よく使う順
+        expense_count=Count("expenses")  #カテゴリごとの使用回数を追加
+    ).order_by("-expense_count", "name", "id")  #よく使うカテゴリが上に
 
-    category_count = categories.count()#件数表示用
+    category_count = categories.count()  #件数
 
+    #テンプレートに渡す
     return render(request, "kakeibo/category_list.html", {
-        "categories": categories,                   #一覧表示用
-        "category_count": category_count,           #○件
+        "categories": categories,                   #一覧表示
+        "category_count": category_count,           #〇件
         "cycle_form": cycle_form,                   #入力欄
-        "cycle_start_day": setting.cycle_start_day, #現在の設定　表示用
+        "cycle_start_day": setting.cycle_start_day, #表示用
     })
+
 
 #カテゴリを新規作成する画面＋保存処理
 @login_required
 def category_create(request):
-    #このユーザーが初めてカテゴリ作るかどうか 初回だけ動きを変える
+    #このユーザーが初めてカテゴリをつくるかどうか　初回だけ動きを変えるため
     existing_count = Category.objects.filter(owner=request.user).count()
     is_first_category = (existing_count == 0)
 
-    if request.method == "POST":
-        form = CategoryForm(request.POST, request.FILES)#画像は今後使う予定
-        if form.is_valid():#文字数OK？必須項目OK？
-            category = form.save(commit=False)#まだDBに保存しない
-            category.owner = request.user #ユーザー紐づけ
-            category.save()#
-            #ここでDBに保存
+    if request.method == "POST":  #POSTなら保存処理
+        #フォーム作成　画像は今後使う
+        form = CategoryForm(request.POST, request.FILES)
+        #文字数、必須項目OK？
+        if form.is_valid():
+            category = form.save(commit=False)  #まだDBに保存しない
+            category.owner = request.user       #ユーザーの紐づけするから
+            category.save()                     #ここで初めてDBに保存
             flash_created(request, "項目を追加しました")
-
-            #最初だけ入力画面に飛ばす
+       
+            #初回だけ入力画面に飛ばす　最初はすぐ入力したいから
             if is_first_category:
                 return redirect("kakeibo:index")
-            return redirect("kakeibo:category_list")#2回目以降は普通に一覧に戻る
+            #２回目以降はふつうに一覧に戻る
+            return redirect("kakeibo:category_list")
         else:
             print("CATEGORY CREATE ERRORS:", form.errors)#デバック用
 
+    #GET時(初期表示)　空フォームを表示
     else:
-        form = CategoryForm()#空フォーム送信
+        form = CategoryForm()
 
+    #テンプレートへ渡す
     return render(request, "kakeibo/category_form.html", {
-        "form": form,              #入力欄
-        "page_title": "項目を追加", #見出し
-        "is_first_category": is_first_category,
+        "form": form,                           #入力欄
+        "page_title": "項目を追加",              #見出し
+        "is_first_category": is_first_category, #初回フラグ
     })
 
-#指定したカテゴリを表示して、編集して、保存する
+
+#自分のカテゴリだけを安全に編集する更新処理(既存データを書き換える)
 @login_required
-#自分のカテゴリだけ
-def category_edit(request, pk):
+def category_edit(request, pk):  #pk = ID
+    #指定されたIDのカテゴリ＆ログイン中のユーザーのカテゴリだけ
     category = get_object_or_404(Category, pk=pk, owner=request.user)
 
-    if request.method == "POST":#編集画面で内容を変えて「保存」を押したときにここに
-        #既存カテゴリを更新する
+    #ユーザーが編集画面で内容を変えて「保存」を押したときここに入る
+    if request.method == "POST":
+        #フォームに既存データを結びつける
+        #instance=category があることで、新規作成じゃなくて、既存カテゴリを更新
         form = CategoryForm(request.POST, request.FILES, instance=category)
-        if form.is_valid():#必須項目・文字数・型は正しいか
-            category = form.save(commit=False)#DBに保存しないで、いったんPython側で受け取る
-            category.owner = request.user #ユーザー紐づけ
-            category.save()#既存カテゴリの上書き更新
+        #必須項目ある？文字数正しい？型は合ってる？
+        if form.is_valid():
+            category = form.save(commit=False)  #まだDB保存しない
+            #このカテゴリの持ち主はログイン中ユーザーと明示
+            category.owner = request.user
+            category.save()  #ここで実際にDB更新
             flash_updated(request, "更新しました")
-            return redirect("kakeibo:category_list")#更新後はカテゴリ一覧画面へ
+            return redirect("kakeibo:category_list")  #カテゴリ一覧画面へ戻す
         else:
             print("CATEGORY EDIT ERRORS:", form.errors)
 
+    #GETなら初期表示(今のカテゴリ名＆設定値が入った状態で表示)
     else:
-        form = CategoryForm(instance=category)#今の入力内容に上書き
+        form = CategoryForm(instance=category)
 
     return render(request, "kakeibo/category_form.html", {
-        "form": form,                 #フォーム全体
-        "page_title": "項目を編集",    #
-        "category": category,         #テンプレート側で使いたい時用
-        "is_first_category": False,   #初回導線の分岐は不要なので
+        "form": form,                #編集フォーム全体
+        "page_title": "項目を編集",   #画面mタイトル
+        "category": category,        #テンプレート側で現在のカテゴリ情報を使いたいとき用
+        "is_first_category": False,  #初回導線の分岐はここでは不要なのでFalse固定
     })
 
-
+#カテゴリを削除するための確認画面と削除処理
 @login_required
-#自分のカテゴリしか削除できない
 def category_delete(request, pk):
+    #URLで指定されたカテゴリID＆ログイン中ユーザーのカテゴリだけ探す
     category = get_object_or_404(Category, pk=pk, owner=request.user)
 
-    if request.method == "POST":    #POSTなら本当に削除
-        category.delete()
-        flash_deleted(request, "削除しました")
-        return redirect("kakeibo:category_list")#削除後はカテゴリ一覧に戻す
+    #POSTなら本当に削除
+    if request.method == "POST":
+        category.delete()  #delete() を呼ぶことで、そのカテゴリをDBから消す
+        flash_deleted(request, "削除しました")  #削除後の通知
+        return redirect("kakeibo:category_list")  #削除後はカテゴリ一覧に戻す
 
+    #GETなら確認画面(POSTでなければ、まだ削除しない)
     return render(request, "kakeibo/category_confirm_delete.html", {
         "category": category,
     })
 
 #1日単位の支出一覧と合計を表示する画面処理
 @login_required
-#1日の履歴
 def history(request):
-    selected_date = request.GET.get("date")#日付を受け取る
+    selected_date = request.GET.get("date")  #これはURLのクエリから日付を取ってる
 
-    #日付を安全に変換
+#日付があれば文字列→date型に　変な形式or指定なしなら今日にする
     if selected_date:
         try:
             target_date = date.fromisoformat(selected_date)
@@ -448,38 +480,42 @@ def history(request):
     else:
         target_date = timezone.localdate()
 
-    #指定日の、自分のデータだけ　カテゴリも一緒に取ってる
+
+#自分のデータ＆指定日のデータだけ　カテゴリも一緒に取得
     expenses = Expense.objects.filter(
         owner=request.user,
         date=target_date
-    ).select_related("category").order_by("-created_at")#新しいのが上
+    ).select_related("category").order_by("-created_at")  #新しいのが上に
 
-    #その日の合計金額　データ0なら0円
+    #その日の合計金額も計算
     total_amount = expenses.aggregate(total=Sum("amount"))["total"] or 0
 
-    #前日と翌日を作る
+    #日付ナビ用　前日・翌日だから、基準日から１日ずらす
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
 
+    #テンプレートに渡す
     return render(request, "kakeibo/history.html", {
-        "expenses": expenses,                      #その日の支出一覧
-        "selected_date": target_date.isoformat(),  #文字列の日付
-        "target_date": target_date,                #date型の日付
-        "total_amount": total_amount,              #その日の合計
-        "prev_date": prev_date.isoformat(),        #前日に移動
-        "next_date": next_date.isoformat(),        #翌日に移動
+        "expenses": expenses,                     #その日の支出一覧
+        "selected_date": target_date.isoformat(), #文字列の日付
+        "target_date": target_date,               #date型の日付
+        "total_amount": total_amount,             #その日の合計
+        "prev_date": prev_date.isoformat(),       #前日・翌日への移動用
+        "next_date": next_date.isoformat(),
     })
 
-#指定した月の支出を、日ごと＋カテゴリごとにまとめて表示する
+
+
+#月の一覧(指定した月の支出を、日ごと＋カテゴリごとにまとめて表示する)
 @login_required
 def month_history(request):
     today = timezone.localdate()
 
-    #年月決める
+    #年月決める()URLから取得
     year_str = request.GET.get("year")
     month_str = request.GET.get("month")
 
-    #なければ今月
+    #数値に変換
     try:
         year = int(year_str) if year_str else today.year
         month = int(month_str) if month_str else today.month
@@ -488,14 +524,15 @@ def month_history(request):
         year = today.year
         month = today.month
 
-    #この人の、この月のデータ全部
+    #この人のこの月のデータ全部取得
     expenses = Expense.objects.filter(
         owner=request.user,
         date__year=year,
         date__month=month
-    ).select_related("category").order_by("-date", "-created_at")#カテゴリも一緒に　新しい順
+    #カテゴリも一緒に取る　　新しい日→古い日に　同じ日なら新しい入力順
+    ).select_related("category").order_by("-date", "-created_at")
 
-    #日ごとにまとめる
+    #日毎にまとめる
     grouped = defaultdict(list)
     daily_totals = {}
     category_totals = defaultdict(int)
@@ -503,110 +540,111 @@ def month_history(request):
     for expense in expenses:
         day = expense.date
         grouped[day].append(expense)
-        category_totals[expense.category.name] += expense.amount #カテゴリごと集計
+        #同時にカテゴリごと集計
+        category_totals[expense.category.name] += expense.amount
 
-    #日ごとの合計
+    #日毎の合計
     for day, items in grouped.items():
         daily_totals[day] = sum(item.amount for item in items)
-
-    #新しい順に並べ替え
+    #日付の新しい順に
     grouped_expenses = sorted(grouped.items(), reverse=True)
-    #全部合計
+    #月の合計
     month_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
+
     #前月計算
     prev_month_date = date(year, month, 1) - timedelta(days=1)
-    #次月計算(12月だけ特別処理)
-    if month == 12:
+    if month == 12:             #12月だけ特別処理
         next_year = year + 1
         next_month = 1
-    else:
+    else:                       #通常時は普通に
         next_year = year
         next_month = month + 1
-
-    #金額が多い順
+    #金額が多い順に
     category_totals_sorted = sorted(
         category_totals.items(),
         key=lambda x: x[1],
         reverse=True
     )
-
+    #テンプレートに渡す
     return render(request, "kakeibo/month_history.html", {
-        "year": year,                              #年
-        "month": month,                            #月
-        "grouped_expenses": grouped_expenses,      #日ごとのデータ
-        "daily_totals": daily_totals,
+        "year": year,                              #年月
+        "month": month,                            
+        "grouped_expenses": grouped_expenses,      #日毎のデータ
+        "daily_totals": daily_totals,              
         "month_total": month_total,                #月合計
         "category_totals": category_totals_sorted, #カテゴリ合計
         "prev_year": prev_month_date.year,         #ナビ用
-        "prev_month": prev_month_date.month,
-        "next_year": next_year,
-        "next_month": next_month,
+        "prev_month": prev_month_date.month,       
+        "next_year": next_year,                    
+        "next_month": next_month,                  
     })
 
 #指定した支出を編集して、元いた画面へ戻す処理
 @login_required
-#URLで指定されたID　ログイン中のユーザーの支出だけ
 def expense_edit(request, pk):
+    #URLで指定された支出ID＆ログイン中ユーザーの支出だけ取得
     expense = get_object_or_404(
-        Expense.objects.select_related("category"), #支出に紐づくカテゴリも一緒に取得しておく
+        Expense.objects.select_related("category"),#支出に紐づくカテゴリも一緒に取得
         pk=pk,
         owner=request.user
     )
-    #どの画面から来たか、どの年月日を見ていたかを覚える
+    #どこから来たか　どの年月日を見ていたか覚えてる(戻り先・日付情報)
     return_to = request.GET.get("return_to") or request.POST.get("return_to") or "history"
     back_date = request.GET.get("date") or request.POST.get("back_date") or request.POST.get("date") or ""
     back_year = request.GET.get("year") or request.POST.get("back_year") or request.POST.get("year") or ""
     back_month = request.GET.get("month") or request.POST.get("back_month") or request.POST.get("month") or ""
 
-    if request.method == "POST":  #POSTなら更新処理
-        #自分の支出を、自分のカテゴリ候補で編集する
+    if request.method == "POST":  #保存ボタンを押した後の処理
+        #自分の支出を、自分のカテゴリ候補で編集するフォームをつくる
         form = ExpenseEditForm(request.POST, instance=expense, user=request.user)
+        #日付の形式・必須入力・カテゴリの整合性などをチェック
         if form.is_valid():
-            updated_expense = form.save(commit=False)#まだDB保存しない
-
-            #そのカテゴリの持ち主が本当にログイン中ユーザーか確認
+            updated_expense = form.save(commit=False)  #まだDB保存しない
+            #そのカテゴリの持ち主が本当にログインユーザーなのか確認
             if updated_expense.category.owner != request.user:
                 messages.error(request, "不正な項目です")
                 return redirect("kakeibo:history")
-
             #ここで実際にDB更新
             updated_expense.owner = request.user
             updated_expense.save()
 
             flash_updated(request, "更新しました")
 
-            #戻り先を分岐
-            #集計画面から来た場合は集計画面へ戻す
+            #戻り先の分岐
+            #集計画面から来たなら、その時見ていた集計画面に戻す
             if return_to == "summary":
                 if back_year and back_month:
                     return redirect(f"/summary/?year={back_year}&month={back_month}")
                 return redirect("kakeibo:summary")
 
-            #月履歴から来た場合は月一覧画面に戻す
+
+            #月履歴から来ていたら、見ていた年月の一覧画面に戻す
             if return_to == "month_history":
                 if back_year and back_month:
                     return redirect(f"/month-history/?year={back_year}&month={back_month}")
                 return redirect("kakeibo:month_history")
 
-            #日別一覧から来た場合、その日付の利益画面へ戻す
+
+            #日ごと履歴から来たなら、見ていた同じ日へ戻す
             if back_date:
                 return redirect(f"/history/?date={back_date}")
             return redirect("kakeibo:history")
-    #GETならフォームを表示 既存データ見ながら修正できる
+    #編集画面を最初に開いたとき　既存データ入りのフォーム
     else:
         form = ExpenseEditForm(instance=expense, user=request.user)
 
+    #テンプレートへ渡す
     return render(request, "kakeibo/expense_form.html", {
         "form": form,              #編集フォーム
         "expense": expense,        #編集対象の支出
         "page_title": "履歴編集",   #画面タイトル
         "return_to": return_to,    #戻り先情報
-        "back_date": back_date,
+        "back_date": back_date,    
         "back_year": back_year,
         "back_month": back_month,
     })
 
-
+#どの画面から来たかを覚えたまま、削除後に元の場所へ戻す
 @login_required
 def expense_delete(request, pk):
     expense = get_object_or_404(
@@ -614,7 +652,7 @@ def expense_delete(request, pk):
         pk=pk,
         owner=request.user
     )
-    #どの画面から来たか
+
     return_to = request.GET.get("return_to") or request.POST.get("return_to") or "history"
     back_date = request.GET.get("date") or request.POST.get("back_date") or request.POST.get("date") or ""
     back_year = request.GET.get("year") or request.POST.get("back_year") or request.POST.get("year") or ""
@@ -646,28 +684,24 @@ def expense_delete(request, pk):
         "back_month": back_month,
     })
 
-#今日と今月の合計金額をJSONで返す
+
 @login_required
 def get_summary(request):
-    today = timezone.localdate() #今日の日付
-    setting = get_app_setting() #集計開始日を取得
-    #今月の範囲を決める
+    today = timezone.localdate()
+    setting = get_app_setting()
     cycle_start, cycle_end = get_cycle_range(today, setting.cycle_start_day)
 
-    #自分だけの、今日の合計
     today_total = Expense.objects.filter(
         owner=request.user,
         date=today
     ).aggregate(total=Sum("amount"))["total"] or 0
 
-    #今月の合計
     month_total = Expense.objects.filter(
         owner=request.user,
         date__gte=cycle_start,
         date__lt=cycle_end
     ).aggregate(total=Sum("amount"))["total"] or 0
 
-    #JSONで返す
     return JsonResponse({
         "today_total": today_total,
         "month_total": month_total,
@@ -676,56 +710,47 @@ def get_summary(request):
 #集計画面
 @login_required
 def summary(request):
-    #今日の日付と、設定を取得
     today = timezone.localdate()
     setting = get_app_setting()
 
-    #表示する年月を決める
     selected_year, selected_month = parse_year_month(
         request.GET.get("year"),
         request.GET.get("month"),
     )
 
-    #その月の基準日を決める
     target_date = date(selected_year, selected_month, 1)
 
-    #集計期間を決める
     cycle_start, cycle_end = get_cycle_range(target_date, setting.cycle_start_day)
-    #自分だけ、今日だけの支出をとる
+
     today_expenses = Expense.objects.filter(
         owner=request.user,
         date=today
     ).select_related("category").order_by("-created_at")
 
-    #今日の合計と件数
     today_total = today_expenses.aggregate(total=Sum("amount"))["total"] or 0
     today_count = today_expenses.count()
 
-    #今見ている月の集計対象すべて取得
     cycle_expenses = Expense.objects.filter(
         owner=request.user,
         date__gte=cycle_start,
         date__lt=cycle_end
     ).select_related("category").order_by("-date", "-created_at")
 
-    #月の合計と件数
     month_total = cycle_expenses.aggregate(total=Sum("amount"))["total"] or 0
     month_count = cycle_expenses.count()
 
-    #日ごとにまとめる
     grouped_dict = defaultdict(list)
     for expense in cycle_expenses:
         grouped_dict[expense.date].append(expense)
 
-    #テンプレートで使いやすい形に変換
     grouped_daily_expenses = []
     for day, items in sorted(grouped_dict.items(), reverse=True):
         day_total = sum(item.amount for item in items)
         grouped_daily_expenses.append({
-            "date": day,          #日付
-            "expenses": items,    #その日の明細
-            "total": day_total,   #その日の合計
-            "count": len(items),  #件数
+            "date": day,
+            "expenses": items,
+            "total": day_total,
+            "count": len(items),
         })
 
     raw_category_totals = (
@@ -735,14 +760,13 @@ def summary(request):
         .order_by("-total", "category__name")
     )
 
-#カテゴリ別合計をDS
     category_totals = []
     for item in raw_category_totals:
         budget = item["category__budget"] or 0
         total = item["total"] or 0
 
         if budget > 0:
-            percent = round((total / budget) * 100, 1) #バーグラフ用　ここで割合計算
+            percent = round((total / budget) * 100, 1)
             bar_percent = min(percent, 100)
             is_over_budget = total > budget
         else:
@@ -794,7 +818,7 @@ def summary(request):
         "cycle_start_day": setting.cycle_start_day,
     })
 
-#新規登録
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect("kakeibo:index")
@@ -803,7 +827,7 @@ def signup(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user) #登録後ログイン
+            login(request, user)
             flash_created(request, "登録が完了しました")
             return redirect("kakeibo:index")
     else:
@@ -811,7 +835,7 @@ def signup(request):
 
     return render(request, "registration/signup.html", {"form": form})
 
-#PWA（アプリ化）ホーム画面に追加
+
 def pwa_manifest(request):
     manifest = f"""
 {{
@@ -846,8 +870,6 @@ def pwa_manifest(request):
 #オフライン対応(画面だけ)
 def service_worker(request):
     js = f"""
-
-#このページを保存しとく
 const CACHE_NAME = "simpleledger-v1";
 const APP_SHELL = [
   "/",
