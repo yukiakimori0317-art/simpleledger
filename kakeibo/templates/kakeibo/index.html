@@ -148,11 +148,7 @@
             <button type="button" class="category-btn" data-category-id="{{ category.id }}"
                 data-category-name="{{ category.name }}">
                 <div class="category-btn-inner">
-                    {% if category.icon %}
-                    <img src="{{ category.icon.url }}" alt="{{ category.name }}" class="category-icon-image">
-                    {% else %}
                     <span class="category-text-only">{{ category.name }}</span>
-                    {% endif %}
                 </div>
             </button>
             {% empty %}

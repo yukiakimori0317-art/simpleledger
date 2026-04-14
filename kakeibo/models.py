@@ -15,12 +15,7 @@ class Category(models.Model):
     name = models.CharField("項目名", max_length=20)
     budget = models.PositiveIntegerField("月予算", default=0)
 
-    icon = models.ImageField(
-        "ロゴ画像",
-        upload_to="category_icons/",
-        blank=True,
-        null=True,
-    )
+
 
     def __str__(self):
         return self.name

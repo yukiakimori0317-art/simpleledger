@@ -14,18 +14,18 @@
             <h1 class="page-title">{{ page_title }}</h1>
 
             <div class="glass-card form-card">
-                <form method="post" enctype="multipart/form-data" novalidate>
+                <form method="post" novalidate>
                     {% csrf_token %}
 
                     {% if form.non_field_errors %}
-                        <div class="field-error">{{ form.non_field_errors|striptags }}</div>
+                    <div class="field-error">{{ form.non_field_errors|striptags }}</div>
                     {% endif %}
 
                     <div class="field-block">
                         <label for="{{ form.name.id_for_label }}" class="field-label">項目名</label>
                         {{ form.name }}
                         {% if form.name.errors %}
-                            <div class="field-error">{{ form.name.errors|striptags }}</div>
+                        <div class="field-error">{{ form.name.errors|striptags }}</div>
                         {% endif %}
                     </div>
 
@@ -33,47 +33,9 @@
                         <label for="{{ form.budget.id_for_label }}" class="field-label">月予算</label>
                         {{ form.budget }}
                         {% if form.budget.errors %}
-                            <div class="field-error">{{ form.budget.errors|striptags }}</div>
+                        <div class="field-error">{{ form.budget.errors|striptags }}</div>
                         {% endif %}
                         <div class="field-help">使わない場合は 0 のままでOKです</div>
-                    </div>
-
-                    <div class="field-block">
-                        <label for="{{ form.icon.id_for_label }}" class="field-label">ロゴ画像</label>
-
-                        <div class="file-input-wrap">
-                            {{ form.icon }}
-                        </div>
-
-                        {% if form.icon.errors %}
-                            <div class="field-error">{{ form.icon.errors|striptags }}</div>
-                        {% endif %}
-
-                        <div class="field-help">
-                            PNG画像がおすすめです。背景透過だと入力画面で見やすくなります。
-                        </div>
-
-                        <div class="icon-preview-card">
-                            <div class="icon-preview-head">プレビュー</div>
-
-                            <div class="icon-preview-box">
-                                <img
-                                    id="icon-preview"
-                                    src="{% if category and category.icon %}{{ category.icon.url }}{% endif %}"
-                                    alt="選択画像プレビュー"
-                                    {% if category and category.icon %}style="display:block;"{% else %}style="display:none;"{% endif %}
-                                >
-
-                                <div
-                                    id="icon-preview-empty"
-                                    class="icon-preview-empty"
-                                    {% if category and category.icon %}style="display:none;"{% else %}style="display:flex;"{% endif %}
-                                >
-                                    <i class="bi bi-image"></i>
-                                    <span>画像を選ぶとここに表示されます</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="action-stack">
@@ -83,15 +45,15 @@
                         </button>
 
                         {% if is_first_category %}
-                            <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
-                                <i class="bi bi-arrow-left"></i>
-                                <span>入力画面へ戻る</span>
-                            </a>
+                        <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>入力画面へ戻る</span>
+                        </a>
                         {% else %}
-                            <a href="{% url 'kakeibo:category_list' %}" class="btn-back-soft">
-                                <i class="bi bi-arrow-left"></i>
-                                <span>設定画面へ戻る</span>
-                            </a>
+                        <a href="{% url 'kakeibo:category_list' %}" class="btn-back-soft">
+                            <i class="bi bi-arrow-left"></i>
+                            <span>設定画面へ戻る</span>
+                        </a>
                         {% endif %}
                     </div>
                 </form>
@@ -206,8 +168,7 @@
 
     .form-control,
     input[type="text"],
-    input[type="number"],
-    input[type="file"] {
+    input[type="number"] {
         width: 100%;
         border-radius: 16px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -237,26 +198,6 @@
         outline: none;
     }
 
-    .file-input-wrap input[type="file"] {
-        padding: 11px 12px !important;
-        cursor: pointer;
-    }
-
-    .file-input-wrap input[type="file"]::file-selector-button {
-        border: none;
-        border-radius: 12px;
-        margin-right: 10px;
-        padding: 8px 12px;
-        color: #fff;
-        font-weight: 700;
-        background:
-            linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.18),
-            0 6px 14px rgba(0, 0, 0, 0.16);
-        cursor: pointer;
-    }
-
     .field-help {
         margin-top: 8px;
         font-size: 0.82rem;
@@ -270,62 +211,6 @@
         font-weight: 700;
         color: #ff9f98;
         line-height: 1.6;
-    }
-
-    .icon-preview-card {
-        margin-top: 12px;
-        padding: 12px;
-        border-radius: 18px;
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.08),
-            0 8px 18px rgba(0, 0, 0, 0.12);
-    }
-
-    .icon-preview-head {
-        font-size: 0.84rem;
-        font-weight: 800;
-        color: rgba(255, 255, 255, 0.74);
-        margin-bottom: 10px;
-    }
-
-    .icon-preview-box {
-        min-height: 120px;
-        border-radius: 18px;
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.05));
-        border: 1px dashed rgba(255, 255, 255, 0.16);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 14px;
-        overflow: hidden;
-    }
-
-    #icon-preview {
-        max-width: 100%;
-        max-height: 110px;
-        object-fit: contain;
-        display: block;
-        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.22));
-    }
-
-    .icon-preview-empty {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.54);
-        font-size: 0.86rem;
-        line-height: 1.6;
-    }
-
-    .icon-preview-empty i {
-        font-size: 1.4rem;
-        color: rgba(154, 230, 255, 0.82);
     }
 
     .action-stack {
@@ -388,60 +273,6 @@
         .form-card {
             padding: 16px 14px;
         }
-
-        .icon-preview-box {
-            min-height: 110px;
-        }
-
-        #icon-preview {
-            max-height: 96px;
-        }
     }
 </style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const fileInput = document.getElementById("id_icon");
-    const preview = document.getElementById("icon-preview");
-    const empty = document.getElementById("icon-preview-empty");
-
-    if (!fileInput || !preview || !empty) return;
-
-    function showEmpty() {
-        preview.src = "";
-        preview.style.display = "none";
-        empty.style.display = "flex";
-    }
-
-    function showImage(src) {
-        preview.src = src;
-        preview.style.display = "block";
-        empty.style.display = "none";
-    }
-
-    fileInput.addEventListener("change", function () {
-        const file = this.files && this.files[0];
-
-        if (!file) {
-            showEmpty();
-            return;
-        }
-
-        if (!file.type || !file.type.startsWith("image/")) {
-            showEmpty();
-            return;
-        }
-
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            showImage(e.target.result);
-        };
-
-        reader.readAsDataURL(file);
-    });
-});
-</script>
 {% endblock %}
