@@ -50,7 +50,7 @@ class ExpenseEditForm(forms.ModelForm):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["name", "budget", "icon"]
+        fields = ["name", "budget"]
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-control",
@@ -62,11 +62,7 @@ class CategoryForm(forms.ModelForm):
                 "min": "0",
                 "step": "1",
             }),
-            "icon": forms.ClearableFileInput(attrs={
-                "class": "form-control",
-                "id": "id_icon",
-                "accept": "image/*",
-            }),
+            
         }
 
 
