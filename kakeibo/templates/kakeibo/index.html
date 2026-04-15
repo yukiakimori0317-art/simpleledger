@@ -532,16 +532,19 @@
     }
 
     .amount-display {
-        min-height: 44px;
-        text-align: right;
-        font-size: clamp(1.7rem, 6vw, 2.4rem);
-        line-height: 1.05;
-        font-weight: 300;
-        letter-spacing: 0.01em;
-        color: #fff;
-        text-shadow: 0 1px 10px rgba(255, 255, 255, 0.08);
-        word-break: break-all;
-    }
+    min-height: 70px;              /* 高さ確保 */
+    display: flex;
+    align-items: center;           /* ← 縦中央 */
+    justify-content: flex-end;     /* 右寄せ（そのまま） */
+
+    font-size: clamp(2.2rem, 7vw, 3.2rem);  /* ← 少し大きく */
+    font-weight: 600;              /* ← 少し太く */
+
+    line-height: 1.1;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(255, 255, 255, 0.12);
+    word-break: break-all;
+}
 
     .formula-display {
         min-height: 18px;
