@@ -297,7 +297,7 @@ def ajax_add_expense(request):
     if amount_int <= 0:
         return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
 
-    
+
     #項目未選択を禁止
     if not category_id:
         return JsonResponse({"success": False, "error": "項目を選択してください"}, status=400)
@@ -356,7 +356,7 @@ def category_list(request):
             #トースト表示
             flash_updated(request, "集計開始日を更新しました")
             return redirect("kakeibo:category_list")
-    
+
     #現在の値をフォームに入れる
     else:
         cycle_form = AppSettingForm(instance=setting)
@@ -393,7 +393,7 @@ def category_create(request):
             category.owner = request.user       #ユーザーの紐づけするから
             category.save()                     #ここで初めてDBに保存
             flash_created(request, "項目を追加しました")
-       
+
             #初回だけ入力画面に飛ばす　最初はすぐ入力したいから
             if is_first_category:
                 return redirect("kakeibo:index")
@@ -566,15 +566,15 @@ def month_history(request):
     #テンプレートに渡す
     return render(request, "kakeibo/month_history.html", {
         "year": year,                              #年月
-        "month": month,                            
+        "month": month,
         "grouped_expenses": grouped_expenses,      #日毎のデータ
-        "daily_totals": daily_totals,              
+        "daily_totals": daily_totals,
         "month_total": month_total,                #月合計
         "category_totals": category_totals_sorted, #カテゴリ合計
         "prev_year": prev_month_date.year,         #ナビ用
-        "prev_month": prev_month_date.month,       
-        "next_year": next_year,                    
-        "next_month": next_month,                  
+        "prev_month": prev_month_date.month,
+        "next_year": next_year,
+        "next_month": next_month,
     })
 
 #指定した支出を編集して、元いた画面へ戻す処理
@@ -637,7 +637,7 @@ def expense_edit(request, pk):
         "expense": expense,        #編集対象の支出
         "page_title": "履歴編集",   #画面タイトル
         "return_to": return_to,    #戻り先情報
-        "back_date": back_date,    
+        "back_date": back_date,
         "back_year": back_year,
         "back_month": back_month,
     })
@@ -705,42 +705,46 @@ def get_summary(request):
         "month_total": month_total,
     })
 
+
+#選んだ月の集計画面に必要なデータを全部作って、summary.html に渡す処理
 #集計画面
 @login_required
 def summary(request):
-    today = timezone.localdate()
-    setting = get_app_setting()
+    today = timezone.localdate()  #今日の日付
+    setting = get_app_setting()  #アプリ設定
 
+    #URLから年月を受け取って、安全な年月に変換
     selected_year, selected_month = parse_year_month(
         request.GET.get("year"),
         request.GET.get("month"),
     )
-
+    #その月の基準日をつくる
     target_date = date(selected_year, selected_month, 1)
-
+    #集計期間を決める
     cycle_start, cycle_end = get_cycle_range(target_date, setting.cycle_start_day)
-
+    #自分・今日だけの支出一覧取る　
     today_expenses = Expense.objects.filter(
         owner=request.user,
         date=today
     ).select_related("category").order_by("-created_at")
-
+    #今日の合計と件数
     today_total = today_expenses.aggregate(total=Sum("amount"))["total"] or 0
     today_count = today_expenses.count()
-
+    #集計期間内の支出を取得
     cycle_expenses = Expense.objects.filter(
         owner=request.user,
         date__gte=cycle_start,
         date__lt=cycle_end
     ).select_related("category").order_by("-date", "-created_at")
-
+    #月の合計と件数
     month_total = cycle_expenses.aggregate(total=Sum("amount"))["total"] or 0
     month_count = cycle_expenses.count()
-
+    #日ごとにまとめる
     grouped_dict = defaultdict(list)
     for expense in cycle_expenses:
         grouped_dict[expense.date].append(expense)
 
+    #テンプレートで使いやすい形に変換
     grouped_daily_expenses = []
     for day, items in sorted(grouped_dict.items(), reverse=True):
         day_total = sum(item.amount for item in items)
@@ -751,22 +755,26 @@ def summary(request):
             "count": len(items),
         })
 
+#カテゴリ別合計をDBで集計
     raw_category_totals = (
         cycle_expenses
         .values("category", "category__name", "category__budget")
         .annotate(total=Sum("amount"), count=Count("id"))
         .order_by("-total", "category__name")
     )
-
+    #バーグラフ用に予算・実際の合計を取り出す
     category_totals = []
     for item in raw_category_totals:
         budget = item["category__budget"] or 0
         total = item["total"] or 0
 
+        #予算がある場合の割合計算
         if budget > 0:
-            percent = round((total / budget) * 100, 1)
-            bar_percent = min(percent, 100)
-            is_over_budget = total > budget
+            percent = round((total / budget) * 100, 1)  #実際の割合
+            bar_percent = min(percent, 100)  #バー表示用　100％で頭打ち
+            is_over_budget = total > budget  #予算オーバーかどうか
+
+        #予算がない場合　割合ないので0扱い　ゼロ除算防ぐ
         else:
             percent = 0
             bar_percent = 0
@@ -783,57 +791,69 @@ def summary(request):
             "is_over_budget": is_over_budget,
             "has_budget": budget > 0,
         })
-
+    #前月・次月ナビつくる
     prev_year, prev_month, next_year, next_month = get_month_navigation(selected_year, selected_month)
 
+    #今見てるのが今月か判定　テンプレート側での分岐に使う
     is_current_view = (selected_year == today.year and selected_month == today.month)
+    #年月の選択肢をつくる　プルダウン用
     year_choices = get_summary_year_choices(request.user, today.year)
     month_choices = list(range(1, 13))
 
+    #テンプレートへ全部渡す
     return render(request, "kakeibo/summary.html", {
-        "today": today,
+        "today": today,                                   #今日の情報
         "today_total": today_total,
         "today_count": today_count,
 
-        "selected_year": selected_year,
+        "selected_year": selected_year,                   #見ている年月
         "selected_month": selected_month,
         "is_current_view": is_current_view,
 
-        "month_total": month_total,
+        "month_total": month_total,                        #月集計
         "month_count": month_count,
         "cycle_start_date": cycle_start,
         "cycle_end_date": cycle_end - timedelta(days=1),
-        "grouped_daily_expenses": grouped_daily_expenses,
-        "category_totals": category_totals,
 
-        "prev_year": prev_year,
+        "grouped_daily_expenses": grouped_daily_expenses,  #日ごとの履歴
+        "category_totals": category_totals,                #カテゴリ別集計
+
+        "prev_year": prev_year,                            #前後ナビ
         "prev_month": prev_month,
         "next_year": next_year,
         "next_month": next_month,
 
-        "year_choices": year_choices,
+        "year_choices": year_choices,                       #プルダウン
         "month_choices": month_choices,
         "cycle_start_day": setting.cycle_start_day,
     })
 
 
+#新規ユーザーを登録して、そのままログインさせる処理
 def signup(request):
+    #すでにログインしてるか(ログイン済みなら登録画面に入れない)
     if request.user.is_authenticated:
         return redirect("kakeibo:index")
 
-    if request.method == "POST":
+    if request.method == "POST":       #新規登録ボタン押したとき
+        #ユーザー入力データをフォームに入れる
         form = SignUpForm(request.POST)
+        #ユーザー名重複・パスワード条件・必須項目　全部OK？
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            flash_created(request, "登録が完了しました")
-            return redirect("kakeibo:index")
+
+            user = form.save()  #新しいユーザーをここでDBに保存
+            login(request, user)  #作ったユーザーで即ログイン
+            flash_created(request, "登録が完了しました")  #トースト通知
+            return redirect("kakeibo:index")  #登録完了後、アプリ開始画面へ
+
+    #初めて開いた時は空のフォーム
     else:
         form = SignUpForm()
-
+    #テンプレート表示
     return render(request, "registration/signup.html", {"form": form})
 
 
+#アプリの設定ファイル（manifest.json）を返す処理
 def pwa_manifest(request):
     manifest = f"""
 {{
@@ -908,7 +928,6 @@ self.addEventListener("fetch", (event) => {{
   event.respondWith(
     caches.match(request).then((cachedResponse) => {{
       if (cachedResponse) return cachedResponse;
-
       return fetch(request)
         .then((networkResponse) => {{
           if (

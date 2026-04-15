@@ -728,19 +728,19 @@
 
     .category-drawer {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1050;
+        top: calc(env(safe-area-inset-top) + 68px);
+        left: 12px;
+        right: 12px;
+        z-index: 1300;
         padding: 10px 14px 22px;
-        border-radius: 0 0 30px 30px;
+        border-radius: 28px;
         background:
             linear-gradient(180deg, rgba(27, 32, 40, 0.96), rgba(17, 21, 28, 0.98));
-        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.10);
         box-shadow: 0 22px 44px rgba(0, 0, 0, 0.35);
-        transform: translateY(-104%);
+        transform: translateY(-120%);
         transition: transform 0.28s cubic-bezier(.22, .9, .28, 1);
-        max-height: 78vh;
+        max-height: calc(78vh - 68px - env(safe-area-inset-top));
         overflow-y: auto;
     }
 

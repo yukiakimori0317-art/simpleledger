@@ -26,7 +26,7 @@
                     <select name="year" class="inline-select"
                         onchange="location.href='?year='+this.value+'&month={{ selected_month }}'">
                         {% for y in year_choices %}
-                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                        <option value="{{ y }}" {% if y==selected_year %}selected{% endif %}>
                             {{ y }}
                         </option>
                         {% endfor %}
@@ -35,7 +35,7 @@
                     <select name="month" class="inline-select"
                         onchange="location.href='?year={{ selected_year }}&month='+this.value">
                         {% for m in month_choices %}
-                        <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+                        <option value="{{ m }}" {% if m==selected_month %}selected{% endif %}>
                             {{ m }}
                         </option>
                         {% endfor %}
@@ -129,18 +129,16 @@
                                 </div>
 
                                 <div class="day-right">
-    <div class="day-total">{{ day_group.total|intcomma }}円</div>
+                                    <div class="day-total">{{ day_group.total|intcomma }}円</div>
 
-    <!-- 👇 追加：目アイコン -->
-    <a href="{% url 'kakeibo:history' %}?date={{ day_group.date|date:'Y-m-d' }}"
-        class="icon-action-btn"
-        aria-label="詳細を見る"
-        title="詳細を見る">
-        <i class="bi bi-eye"></i>
-    </a>
+                                    <!-- 👇 追加：目アイコン -->
+                                    <a href="{% url 'kakeibo:history' %}?date={{ day_group.date|date:'Y-m-d' }}"
+                                        class="icon-action-btn" aria-label="詳細を見る" title="詳細を見る">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
 
-    <!-- 👇 既存：開閉 -->
-    <div class="day-toggle-icons">
+                                    <!-- 👇 既存：開閉 -->
+                                    <div class="day-toggle-icons">
                                         <span class="toggle-icon toggle-open" aria-label="明細を開く">
                                             <i class="bi bi-chevron-down"></i>
                                         </span>
@@ -165,16 +163,14 @@
 
                                             <div class="expense-actions">
                                                 <a href="{% url 'kakeibo:expense_edit' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
-                                                    class="icon-action-btn edit-btn summary-edit-link"
-                                                    aria-label="編集"
+                                                    class="icon-action-btn edit-btn summary-edit-link" aria-label="編集"
                                                     title="編集">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
 
                                                 <a href="{% url 'kakeibo:expense_delete' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
                                                     class="icon-action-btn delete-btn summary-delete-link"
-                                                    aria-label="削除"
-                                                    title="削除">
+                                                    aria-label="削除" title="削除">
                                                     <i class="bi bi-trash3"></i>
                                                 </a>
                                             </div>

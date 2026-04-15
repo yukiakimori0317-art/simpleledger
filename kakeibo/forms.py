@@ -17,11 +17,12 @@ class ExpenseForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-
+        #このユーザーのカテゴリだけ表示する
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
             ).order_by("name")
+        #ユーザーがないなら、何もしない
         else:
             self.fields["category"].queryset = Category.objects.none()
 
@@ -62,7 +63,7 @@ class CategoryForm(forms.ModelForm):
                 "min": "0",
                 "step": "1",
             }),
-            
+
         }
 
 
