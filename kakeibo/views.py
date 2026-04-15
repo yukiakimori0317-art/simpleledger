@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -348,33 +348,32 @@ def category_list(request):
     setting = get_app_setting()  #必ず1件ある設定を取得
 
     if request.method == "POST":  #POSTなら設定更新
-        #既存のsettingを更新する
         cycle_form = AppSettingForm(request.POST, instance=setting)
-        #1~31の範囲か？数字か？
         if cycle_form.is_valid():
-            #DB更新
             cycle_form.save()
-            #トースト表示
             flash_updated(request, "集計開始日を更新しました")
             return redirect("kakeibo:category_list")
-
-    #現在の値をフォームに入れる
     else:
         cycle_form = AppSettingForm(instance=setting)
 
-    #自分のカテゴリだけ
+    today = timezone.localdate()
+    cycle_start, cycle_end = get_cycle_range(today, setting.cycle_start_day)
+
+    #自分のカテゴリだけ + 今月件数
     categories = Category.objects.filter(owner=request.user).annotate(
-        expense_count=Count("expenses")  #カテゴリごとの使用回数を追加
-    ).order_by("-expense_count", "name", "id")  #よく使うカテゴリが上に
+        current_month_count=Count(
+            "expenses",
+            filter=Q(expenses__date__gte=cycle_start, expenses__date__lt=cycle_end)
+        )
+    ).order_by("name", "id")
 
     category_count = categories.count()  #件数
 
-    #テンプレートに渡す
     return render(request, "kakeibo/category_list.html", {
-        "categories": categories,                   #一覧表示
-        "category_count": category_count,           #〇件
-        "cycle_form": cycle_form,                   #入力欄
-        "cycle_start_day": setting.cycle_start_day, #表示用
+        "categories": categories,
+        "category_count": category_count,
+        "cycle_form": cycle_form,
+        "cycle_start_day": setting.cycle_start_day,
     })
 
 
