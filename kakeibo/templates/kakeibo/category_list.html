@@ -65,40 +65,28 @@
 
             {% if categories %}
             <div class="category-list">
-                {% for category in categories %}
-                <div class="category-item">
-                    <div class="category-row">
-                        <div class="category-icon-box">
-                            {% if category.icon %}
-                                <img src="{{ category.icon.url }}" alt="{{ category.name }}">
-                            {% else %}
-                                <div class="category-icon-fallback">
-                                    <i class="bi bi-image"></i>
-                                </div>
-                            {% endif %}
-                        </div>
 
-                        <div class="category-main">
-                            <div class="category-name">{{ category.name }}</div>
-                            <div class="category-meta">
-                                <div class="meta-chip">月予算 {{ category.budget|default:0 }}円</div>
-                                <div class="meta-chip">{{ category.expense_count }}件</div>
-                            </div>
-                        </div>
-                    </div>
+{% for category in categories %}
+<div class="category-row">
+    <div class="category-main">
+        <div class="category-name">{{ category.name }}</div>
+        <div class="category-sub">
+            月予算：{{ category.budget|intcomma }}円　
+            ・ {{ category.current_month_count }}件
+        </div>
+    </div>
 
-                    <div class="category-actions">
-                        <a href="{% url 'kakeibo:category_edit' category.pk %}" class="btn-action btn-edit">
-                            <i class="bi bi-pencil-square"></i>
-                            <span>編集</span>
-                        </a>
-                        <a href="{% url 'kakeibo:category_delete' category.pk %}" class="btn-action btn-delete">
-                            <i class="bi bi-trash3"></i>
-                            <span>削除</span>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
+    <div class="category-actions">
+        <a href="{% url 'kakeibo:category_edit' category.pk %}" class="mini-edit-btn">
+            編集
+        </a>
+        <a href="{% url 'kakeibo:category_delete' category.pk %}" class="mini-delete-btn">
+            削除
+        </a>
+    </div>
+</div>
+{% endfor %}
+
             </div>
             {% else %}
             <div class="glass-card empty-card">
@@ -692,6 +680,67 @@
             padding: 0 9px;
             font-size: 0.74rem;
         }
+    }
+    .category-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+        border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .category-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .category-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .category-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .mini-edit-btn,
+    .mini-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: #fff;
+    }
+
+    .mini-edit-btn {
+    background: rgba(90, 200, 250, 0.18);
+    }
+
+    .mini-delete-btn {
+    background: rgba(255, 59, 48, 0.18);
+    }
+    .category-page .container,
+    .settings-page .container {
+        padding-top: 6px !important;
+    }
+    .category-sub {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.6);
+        margin-top: 2px;
     }
 </style>
 {% endblock %}

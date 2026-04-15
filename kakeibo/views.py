@@ -20,6 +20,7 @@ from django.templatetags.static import static
 from django.shortcuts import render, redirect
 from .forms import SignUpForm
 
+
 #フラッシュメッセージ（通知）
 def flash_created(request, message):
     messages.success(request, message, extra_tags="created")
