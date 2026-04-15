@@ -26,7 +26,7 @@
                     <select name="year" class="inline-select"
                         onchange="location.href='?year='+this.value+'&month={{ selected_month }}'">
                         {% for y in year_choices %}
-                        <option value="{{ y }}" {% if y==selected_year %}selected{% endif %}>
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
                             {{ y }}
                         </option>
                         {% endfor %}
@@ -35,7 +35,7 @@
                     <select name="month" class="inline-select"
                         onchange="location.href='?year={{ selected_year }}&month='+this.value">
                         {% for m in month_choices %}
-                        <option value="{{ m }}" {% if m==selected_month %}selected{% endif %}>
+                        <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
                             {{ m }}
                         </option>
                         {% endfor %}
