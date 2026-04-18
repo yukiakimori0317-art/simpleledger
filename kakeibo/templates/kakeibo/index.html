@@ -244,7 +244,7 @@
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        margin-bottom: 14px;
+        margin-bottom: 8px;
         padding-left: 2px;
     }
 
@@ -286,8 +286,8 @@
 
     .calc-inner {
         position: relative;
-        border-radius: 33px;
-        padding: 18px 16px 18px;
+        border-radius: 30px;
+        padding: 14px 14px 16px;
         background:
             linear-gradient(180deg, rgba(32, 38, 48, 0.94), rgba(18, 22, 30, 0.96));
         backdrop-filter: blur(22px);
@@ -373,8 +373,8 @@
 }
 
     .today-summary-amount {
-        font-size: clamp(1.7rem, 5.6vw, 2.3rem);
-        line-height: 1.06;
+        font-size: clamp(1.35rem, 4.6vw, 1.8rem);
+        line-height: 1.05;
         font-weight: 800;
         color: #fff;
         text-shadow: 0 2px 10px rgba(255, 255, 255, 0.08);
@@ -383,10 +383,10 @@
 
     .today-summary-count {
         flex-shrink: 0;
-        font-size: 0.92rem;
+        font-size: 0.8rem;
         font-weight: 800;
         color: rgba(255, 255, 255, 0.72);
-        padding-bottom: 4px;
+        padding-bottom: 2px;
     }
 
     .today-summary-divider {
@@ -400,7 +400,7 @@
         z-index: 1;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
 
      .today-summary-heading-wrap {
@@ -413,12 +413,12 @@
     }
 
     .date-nav-btn {
-        width: 42px;
-        min-width: 42px;
-        max-width: 42px;
-        height: 42px;
-        flex: 0 0 42px;
-        border-radius: 14px;
+        width: 38px;
+        min-width: 38px;
+        max-width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        border-radius: 12px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -453,23 +453,23 @@
         min-width: 0;
         max-width: 100%;
         box-sizing: border-box;
-        height: 46px;
-        line-height: 46px;
-        border-radius: 15px;
+        height: 40px;
+        line-height: 40px;
+        border-radius: 13px;
         border: 1px solid rgba(255, 255, 255, 0.12);
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
         color: #fff;
         padding: 0 10px;
-        padding-top: 2px;
         font-weight: 700;
-        font-size: 16px;
+        font-size: 15px;
         -webkit-appearance: none;
         appearance: none;
         box-shadow:
             inset 0 1px 0 rgba(255, 255, 255, 0.08),
             0 8px 18px rgba(0, 0, 0, 0.12);
     }
+
 
     .entry-date-input::-webkit-calendar-picker-indicator {
         filter: invert(1) brightness(1.5);
@@ -499,13 +499,13 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 7px;
-        min-height: 40px;
-        padding: 0 14px;
-        border-radius: 16px;
+        gap: 6px;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 14px;
         text-decoration: none;
         color: #fff;
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         font-weight: 800;
         border: 1px solid rgba(255, 255, 255, 0.12);
         box-shadow:
@@ -530,9 +530,9 @@
     .display-panel {
         position: relative;
         overflow: hidden;
-        border-radius: 26px;
-        padding: 16px 16px 14px;
-        margin-bottom: 16px;
+        border-radius: 22px;
+        padding: 12px 14px 10px;
+        margin-bottom: 12px;
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
         border: 1px solid rgba(255, 255, 255, 0.14);
@@ -553,24 +553,27 @@
     }
 
     .amount-display {
-        min-height: 54px;
-        text-align: right;
-        font-size: clamp(2rem, 7vw, 3rem);
-        line-height: 1.08;
-        font-weight: 300;
-        letter-spacing: 0.01em;
-        color: #fff;
-        text-shadow: 0 1px 10px rgba(255, 255, 255, 0.08);
-        word-break: break-all;
-    }
+    min-height: 70px;              /* 高さ確保 */
+    display: flex;
+    align-items: center;           /* ← 縦中央 */
+    justify-content: flex-end;     /* 右寄せ（そのまま） */
+
+    font-size: clamp(2.2rem, 7vw, 3.2rem);  /* ← 少し大きく */
+    font-weight: 600;              /* ← 少し太く */
+
+    line-height: 1.1;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(255, 255, 255, 0.12);
+    word-break: break-all;
+}
 
     .formula-display {
-        min-height: 22px;
+        min-height: 18px;
         text-align: right;
-        font-size: 0.88rem;
+        font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.50);
         letter-spacing: 0.03em;
-        margin-top: 3px;
+        margin-top: 2px;
     }
 
     .calculator-grid {
@@ -581,7 +584,7 @@
 
     .calc-btn {
         position: relative;
-        height: 72px;
+        height: 66px;
         border: none;
         border-radius: 24px;
         color: #fff;
@@ -733,37 +736,52 @@
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         opacity: 0;
+        visibility: hidden;
         pointer-events: none;
-        transition: opacity 0.24s ease;
-        z-index: 1040;
+        transition: opacity 0.24s ease, visibility 0.24s ease;
+        z-index: 1100;
     }
 
     .category-drawer-backdrop.show {
         opacity: 1;
+        visibility: visible;
         pointer-events: auto;
     }
 
     .category-drawer {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1050;
+        top: calc(env(safe-area-inset-top) + 72px);
+        left: 12px;
+        right: 12px;
+        z-index: 1150;
         padding: 10px 14px 22px;
-        border-radius: 0 0 30px 30px;
+        border-radius: 24px;
         background:
             linear-gradient(180deg, rgba(27, 32, 40, 0.96), rgba(17, 21, 28, 0.98));
-        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.10);
         box-shadow: 0 22px 44px rgba(0, 0, 0, 0.35);
-        transform: translateY(-104%);
-        transition: transform 0.28s cubic-bezier(.22, .9, .28, 1);
-        max-height: 78vh;
+
+        max-height: calc(78vh - 72px - env(safe-area-inset-top));
         overflow-y: auto;
+
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-18px) scale(0.98);
+        transform-origin: top center;
+        transition:
+            opacity 0.22s ease,
+            transform 0.28s cubic-bezier(.22, .9, .28, 1),
+            visibility 0.22s ease;
     }
 
     .category-drawer.show {
-        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
     }
+
 
     .drawer-handle {
         width: 54px;
