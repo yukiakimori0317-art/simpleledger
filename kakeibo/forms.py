@@ -1,9 +1,14 @@
-#ログイン中の人に、他人のカテゴリを見せないための場所
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import AppSetting, Category, Expense
+
+from .models import (
+    AppSetting,
+    Category,
+    Expense,
+    Income,
+    IncomeCategory,
+)
 
 
 class ExpenseForm(forms.ModelForm):
@@ -17,7 +22,6 @@ class ExpenseForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
@@ -38,13 +42,32 @@ class ExpenseEditForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
             ).order_by("name")
         else:
             self.fields["category"].queryset = Category.objects.none()
+
+
+class IncomeEditForm(forms.ModelForm):
+    class Meta:
+        model = Income
+        fields = ["category", "amount", "date"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "amount": forms.NumberInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["category"].queryset = IncomeCategory.objects.filter(
+                owner=user
+            ).order_by("name")
+        else:
+            self.fields["category"].queryset = IncomeCategory.objects.none()
 
 
 class CategoryForm(forms.ModelForm):
@@ -62,7 +85,18 @@ class CategoryForm(forms.ModelForm):
                 "min": "0",
                 "step": "1",
             }),
-            
+        }
+
+
+class IncomeCategoryForm(forms.ModelForm):
+    class Meta:
+        model = IncomeCategory
+        fields = ["name"]
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "収入項目名を入力",
+            }),
         }
 
 
@@ -78,6 +112,7 @@ class AppSettingForm(forms.ModelForm):
                 "placeholder": "例: 25",
             }),
         }
+
 
 class SignUpForm(UserCreationForm):
     username = forms.CharField(

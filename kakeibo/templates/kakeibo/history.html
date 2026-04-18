@@ -10,7 +10,10 @@
 
             <!-- タイトル -->
             <div class="page-title-wrap">
-                <h1 class="page-title">この日の履歴</h1>
+                <h1 class="page-title">この日の収支</h1>
+                <div class="page-subtitle">
+                    1日の記録をまとめて確認
+                </div>
             </div>
 
             <!-- 日付ナビ -->
@@ -20,8 +23,9 @@
                         <i class="bi bi-chevron-left"></i>
                     </a>
 
-                    <div class="date-text">
-                        {{ target_date|date:"Y年n月j日" }}
+                    <div class="date-center">
+                        <div class="date-label">対象日</div>
+                        <div class="date-text">{{ target_date|date:"Y年n月j日" }}</div>
                     </div>
 
                     <a href="?date={{ next_date }}" class="nav-btn">
@@ -32,34 +36,78 @@
 
             <!-- 合計 -->
             <div class="glass-card total-card">
-                <div class="total-label">この日の合計</div>
-                <div class="total-amount">{{ total_amount|intcomma }}円</div>
+                <div class="total-label">この日の収支</div>
+                <div class="total-amount {% if total_balance < 0 %}is-minus{% endif %}">
+                    {{ total_balance|intcomma }}円
+                </div>
+
+                <div class="total-breakdown">
+                    <div class="mini-total expense-total-box">
+                        <div class="mini-total-label">支出</div>
+                        <div class="mini-total-value">{{ expense_total|intcomma }}円</div>
+                    </div>
+                    <div class="mini-total income-total-box">
+                        <div class="mini-total-label">収入</div>
+                        <div class="mini-total-value">{{ income_total|intcomma }}円</div>
+                    </div>
+                </div>
             </div>
 
             <!-- 履歴 -->
-            {% if expenses %}
+            {% if entries %}
             <div class="history-list">
-                {% for expense in expenses %}
-                <div class="history-item">
-                    <div class="history-row">
-                        <div class="history-left">
-                            <div class="history-category">{{ expense.category.name }}</div>
-                            <div class="history-time">{{ expense.created_at|date:"H:i" }}</div>
+                {% for entry in entries %}
+                <div class="history-item {% if entry.kind == 'income' %}income-item{% else %}expense-item{% endif %}">
+                    <div class="history-top">
+                        <div class="history-chip-wrap">
+                            {% if entry.kind == "income" %}
+                            <span class="kind-chip income-chip">収入</span>
+                            {% else %}
+                            <span class="kind-chip expense-chip">支出</span>
+                            {% endif %}
                         </div>
 
-                        <div class="history-right">
-                            <div class="history-amount">{{ expense.amount|intcomma }}円</div>
+                        <div class="history-time">
+                            <i class="bi bi-clock"></i>
+                            {{ entry.created_at|date:"H:i" }}
+                        </div>
+                    </div>
 
-                            <div class="history-actions">
-                                <a href="{% url 'kakeibo:expense_edit' expense.pk %}?return_to=day&date={{ selected_date }}"
-                                    class="icon-btn edit-btn">
+                    <div class="history-main">
+                        <div class="history-category">{{ entry.category_name }}</div>
+
+                        <div class="history-bottom-row">
+                            <div class="history-amount {% if entry.kind == 'income' %}income-amount{% else %}expense-amount{% endif %}">
+                                {% if entry.kind == 'income' %}+{% else %}-{% endif %}
+                                {{ entry.amount|intcomma }}円
+                            </div>
+
+                            <div class="history-actions-inline">
+                                {% if entry.kind == "income" %}
+                                <a href="{% url 'kakeibo:income_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
+                                   class="icon-btn edit-btn"
+                                   aria-label="収入を編集">
                                     <i class="bi bi-pencil"></i>
                                 </a>
 
-                                <a href="{% url 'kakeibo:expense_delete' expense.pk %}?return_to=day&date={{ selected_date }}"
-                                    class="icon-btn delete-btn">
+                                <a href="{% url 'kakeibo:income_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
+                                   class="icon-btn delete-btn"
+                                   aria-label="収入を削除">
                                     <i class="bi bi-trash3"></i>
                                 </a>
+                                {% else %}
+                                <a href="{% url 'kakeibo:expense_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
+                                   class="icon-btn edit-btn"
+                                   aria-label="支出を編集">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
+                                <a href="{% url 'kakeibo:expense_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
+                                   class="icon-btn delete-btn"
+                                   aria-label="支出を削除">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -68,7 +116,11 @@
             </div>
             {% else %}
             <div class="glass-card empty-box">
-                この日の入力はありません
+                <div class="empty-icon">
+                    <i class="bi bi-journal-x"></i>
+                </div>
+                <div class="empty-title">この日の入力はありません</div>
+                <div class="empty-sub">支出や収入を追加すると、ここに表示されます</div>
             </div>
             {% endif %}
 
@@ -89,125 +141,354 @@
         color: #fff;
     }
 
+    .history-page {
+        min-height: 100vh;
+    }
+
     .page-wrap {
         max-width: 520px;
         margin: 0 auto;
     }
 
+    .page-title-wrap {
+        margin-bottom: 14px;
+        padding: 2px 4px 0;
+    }
+
     .page-title {
-        font-size: 1.05rem;
+        font-size: 1.12rem;
         font-weight: 800;
-        margin-bottom: 12px;
+        margin-bottom: 4px;
+        letter-spacing: 0.02em;
+    }
+
+    .page-subtitle {
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.52);
     }
 
     .glass-card {
-        border-radius: 22px;
-        padding: 14px;
-        margin-bottom: 12px;
+        border-radius: 24px;
+        padding: 15px;
+        margin-bottom: 14px;
         background: rgba(255,255,255,0.08);
         backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
         border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 8px 28px rgba(0,0,0,0.22);
     }
 
     /* 日付ナビ */
+    .date-card {
+        padding: 14px 12px;
+    }
+
     .date-nav {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
         align-items: center;
+        gap: 10px;
+    }
+
+    .date-center {
+        text-align: center;
+    }
+
+    .date-label {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 2px;
+        letter-spacing: 0.08em;
     }
 
     .nav-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.10);
         color: #fff;
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.08);
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .nav-btn:active {
+        transform: scale(0.95);
     }
 
     .date-text {
         font-weight: 800;
         font-size: 1rem;
+        letter-spacing: 0.02em;
     }
 
     /* 合計 */
     .total-card {
         text-align: center;
+        padding-top: 18px;
+        padding-bottom: 18px;
     }
 
     .total-label {
-        font-size: 0.85rem;
-        color: rgba(255,255,255,0.6);
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.56);
+        margin-bottom: 6px;
+        letter-spacing: 0.08em;
     }
 
     .total-amount {
-        font-size: 1.8rem;
+        font-size: 2rem;
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+        margin-bottom: 14px;
+    }
+
+    .total-amount.is-minus {
+        color: #ff8b84;
+    }
+
+    .total-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .mini-total {
+        border-radius: 18px;
+        padding: 12px 10px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mini-total-label {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.5);
+        margin-bottom: 4px;
+    }
+
+    .mini-total-value {
+        font-size: 0.96rem;
         font-weight: 800;
+    }
+
+    .expense-total-box .mini-total-value {
+        color: #ffb1ab;
+    }
+
+    .income-total-box .mini-total-value {
+        color: #86efac;
     }
 
     /* 履歴 */
     .history-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
+        margin-top: 6px;
     }
 
     .history-item {
-        border-radius: 18px;
-        padding: 12px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 22px;
+        padding: 14px 14px 14px;
+        background: rgba(255,255,255,0.055);
+        border: 1px solid rgba(255,255,255,0.10);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     }
 
-    .history-row {
+    .history-top {
         display: flex;
+        align-items: center;
         justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .history-chip-wrap {
+        display: flex;
         align-items: center;
     }
 
-    .history-category {
-        font-weight: 700;
+    .kind-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 54px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        border: 1px solid transparent;
+    }
+
+    .income-chip {
+        background: rgba(52, 199, 89, 0.16);
+        color: #8df0ad;
+        border-color: rgba(52, 199, 89, 0.22);
+    }
+
+    .expense-chip {
+        background: rgba(255, 69, 58, 0.16);
+        color: #ff9f98;
+        border-color: rgba(255, 69, 58, 0.22);
     }
 
     .history-time {
-        font-size: 0.75rem;
-        color: rgba(255,255,255,0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.78rem;
+        color: rgba(255,255,255,0.52);
+        white-space: nowrap;
+    }
+
+    .history-main {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .history-category {
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .history-bottom-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
     }
 
     .history-amount {
-        font-weight: 800;
+        font-size: 1.28rem;
+        font-weight: 900;
+        line-height: 1.2;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
     }
 
-    .history-actions {
+    .income-amount {
+        color: #8df0ad;
+    }
+
+    .expense-amount {
+        color: #ffd1ce;
+    }
+
+    .history-actions-inline {
         display: flex;
-        gap: 6px;
-        margin-top: 4px;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     .icon-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        display: flex;
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        text-decoration: none;
         background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        transition: transform 0.15s ease, background 0.15s ease;
     }
 
-    .edit-btn { color: #5ac8fa; }
-    .delete-btn { color: #ff453a; }
+    .icon-btn:active {
+        transform: scale(0.95);
+    }
+
+    .edit-btn {
+        color: #7dd3fc;
+    }
+
+    .delete-btn {
+        color: #ff8b84;
+    }
+
+    /* 空表示 */
+    .empty-box {
+        text-align: center;
+        padding: 28px 16px;
+    }
+
+    .empty-icon {
+        font-size: 1.5rem;
+        color: rgba(255,255,255,0.38);
+        margin-bottom: 10px;
+    }
+
+    .empty-title {
+        font-size: 0.98rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .empty-sub {
+        font-size: 0.82rem;
+        color: rgba(255,255,255,0.5);
+        line-height: 1.6;
+    }
 
     /* 戻る */
+    .bottom-actions {
+        margin-top: 16px;
+        padding-bottom: 8px;
+    }
+
     .back-btn {
         display: block;
+        width: 100%;
         text-align: center;
-        padding: 14px;
-        border-radius: 16px;
-        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.11);
         color: #fff;
         font-weight: 800;
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .back-btn:active {
+        transform: scale(0.98);
+    }
+
+    @media (max-width: 420px) {
+        .container {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+        }
+
+        .total-amount {
+            font-size: 1.8rem;
+        }
+
+        .history-amount {
+            font-size: 1.14rem;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        .history-bottom-row {
+            gap: 8px;
+        }
     }
 </style>
 {% endblock %}

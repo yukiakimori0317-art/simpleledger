@@ -11,8 +11,16 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import AppSettingForm, CategoryForm, ExpenseEditForm
-from .models import AppSetting, Category, Expense
+from .forms import (
+    AppSettingForm,
+    CategoryForm,
+    ExpenseEditForm,
+    IncomeCategoryForm,
+    IncomeEditForm,
+    SignUpForm,
+)
+from .models import AppSetting, Category, Expense, Income, IncomeCategory
+
 
 from django.http import HttpResponse
 from django.templatetags.static import static
@@ -43,6 +51,11 @@ def get_preferred_categories(user):
     return Category.objects.filter(owner=user).annotate(
         expense_count=Count("expenses")
     ).order_by("-expense_count", "name", "id")
+
+def get_preferred_income_categories(user):
+    return IncomeCategory.objects.filter(owner=user).annotate(
+        income_count=Count("incomes")
+    ).order_by("-income_count", "name", "id")
 
 #月の開始日を自由に決める
 def get_cycle_range(target_date, cycle_start_day):
@@ -162,218 +175,154 @@ def parse_entry_date(date_str):
 
 @login_required
 def index(request):
-    categories = get_preferred_categories(request.user)#カテゴリ取得
+    expense_categories = get_preferred_categories(request.user)
+    income_categories = get_preferred_income_categories(request.user)
 
     today = timezone.localdate()
     target_date = parse_entry_date(
         request.GET.get("date") or request.POST.get("entry_date")
     )
 
-    #今日のデータ取得
     selected_day_expenses = Expense.objects.filter(
         owner=request.user,
         date=target_date
     ).select_related("category").order_by("-created_at")
 
-    selected_day_total = selected_day_expenses.aggregate(
-        total=Sum("amount")
-    )["total"] or 0
-    selected_day_count = selected_day_expenses.count()
+    selected_day_incomes = Income.objects.filter(
+        owner=request.user,
+        date=target_date
+    ).select_related("category").order_by("-created_at")
+
+    expense_total = selected_day_expenses.aggregate(total=Sum("amount"))["total"] or 0
+    income_total = selected_day_incomes.aggregate(total=Sum("amount"))["total"] or 0
+    selected_day_balance = income_total - expense_total
+    selected_day_count = selected_day_expenses.count() + selected_day_incomes.count()
 
     prev_input_date = target_date - timedelta(days=1)
     next_input_date = target_date + timedelta(days=1)
     can_go_next = next_input_date <= today
 
-    if request.method == "POST":  #ここで保存
-        amount = request.POST.get("amount")
-        category_id = request.POST.get("category")
-        entry_date = parse_entry_date(request.POST.get("entry_date"))
-
-        if not amount:
-            return render(request, "kakeibo/index.html", {
-                "categories": categories,
-                "today": today,
-                "target_date": target_date,
-                "selected_day_total": selected_day_total,
-                "selected_day_count": selected_day_count,
-                "prev_input_date": prev_input_date,
-                "next_input_date": next_input_date,
-                "can_go_next": can_go_next,
-                "is_today_input_date": target_date == today,
-                "error_message": "金額を入力してください。",
-            })
-
-        try:
-            amount_int = int(float(amount))
-        except ValueError:
-            return render(request, "kakeibo/index.html", {
-                "categories": categories,
-                "today": today,
-                "target_date": target_date,
-                "selected_day_total": selected_day_total,
-                "selected_day_count": selected_day_count,
-                "prev_input_date": prev_input_date,
-                "next_input_date": next_input_date,
-                "can_go_next": can_go_next,
-                "is_today_input_date": target_date == today,
-                "error_message": "金額が正しくありません。",
-            })
-
-        if amount_int <= 0:
-            return render(request, "kakeibo/index.html", {
-                "categories": categories,
-                "today": today,
-                "target_date": target_date,
-                "selected_day_total": selected_day_total,
-                "selected_day_count": selected_day_count,
-                "prev_input_date": prev_input_date,
-                "next_input_date": next_input_date,
-                "can_go_next": can_go_next,
-                "is_today_input_date": target_date == today,
-                "error_message": "金額を入力してください。",
-            })
-
-        if not category_id:
-            return render(request, "kakeibo/index.html", {
-                "categories": categories,
-                "today": today,
-                "target_date": target_date,
-                "selected_day_total": selected_day_total,
-                "selected_day_count": selected_day_count,
-                "prev_input_date": prev_input_date,
-                "next_input_date": next_input_date,
-                "can_go_next": can_go_next,
-                "is_today_input_date": target_date == today,
-                "error_message": "項目を選択してください。",
-            })
-
-        category = get_object_or_404(Category, pk=category_id, owner=request.user)
-
-        #ここでDBに入る
-        Expense.objects.create(
-            owner=request.user,
-            category=category,
-            amount=amount_int,
-            date=entry_date,
-        )
-
-        return redirect(f"{request.path}?date={entry_date.isoformat()}")
-
-    #HTMLにデータ渡して表示
     return render(request, "kakeibo/index.html", {
-        "categories": categories,
+        "expense_categories": expense_categories,
+        "income_categories": income_categories,
         "today": today,
         "target_date": target_date,
-        "selected_day_total": selected_day_total,
+        "expense_total": expense_total,
+        "income_total": income_total,
+        "selected_day_balance": selected_day_balance,
         "selected_day_count": selected_day_count,
         "prev_input_date": prev_input_date,
         "next_input_date": next_input_date,
         "can_go_next": can_go_next,
         "is_today_input_date": target_date == today,
     })
-
 #Ajax保存(入力された支出をDBに保存して、結果をJSONで返す)
 #入力された支出を安全に保存して、画面更新に必要な情報をまとめて返す処理
 @login_required
-def ajax_add_expense(request):
-    #保存処理はPOSTで 405→その方法では使えません
+def ajax_add_entry(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "POST only"}, status=405)
 
-    #金額・項目ID・入力日を受け取る　日付は空・不正な文字・未来日は今日に補正される
     amount = request.POST.get("amount")
     category_id = request.POST.get("category")
     entry_date = parse_entry_date(request.POST.get("entry_date"))
+    entry_type = request.POST.get("entry_type", "expense")
 
-    #その方法では使えません 400→送られた内容が正しくない
     if not amount:
         return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
-    #金額を数値に変換　小数がきても、整数にして保存
+
     try:
         amount_int = int(float(amount))
     except ValueError:
         return JsonResponse({"success": False, "error": "金額が正しくありません"}, status=400)
-    #0以下を禁止
+
     if amount_int <= 0:
         return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
 
-    
-    #項目未選択を禁止
     if not category_id:
         return JsonResponse({"success": False, "error": "項目を選択してください"}, status=400)
 
-    #ログイン中のユーザーのものか確認してからカテゴリを取得
-    category = get_object_or_404(Category, pk=category_id, owner=request.user)
-    #ここで実際にDBに保存　支出データを新しく作る本体
-    expense = Expense.objects.create(
-        owner=request.user,  #誰のデータ
-        category=category,   #どの項目
-        amount=amount_int,   #いくらか
-        date=entry_date,     #いつの支出
-    )
-    #保存したら、その日の合計と件数をすぐ再計算して返す
-    selected_day_qs = Expense.objects.filter(owner=request.user, date=entry_date)
-    selected_day_total = selected_day_qs.aggregate(total=Sum("amount"))["total"] or 0
-    selected_day_count = selected_day_qs.count()
+    if entry_type == "income":
+        category = get_object_or_404(IncomeCategory, pk=category_id, owner=request.user)
+        income = Income.objects.create(
+            owner=request.user,
+            category=category,
+            amount=amount_int,
+            date=entry_date,
+        )
+        saved_name = category.name
+        saved_id = income.id
+        toast_message = "収入を追加しました"
+    else:
+        category = get_object_or_404(Category, pk=category_id, owner=request.user)
+        expense = Expense.objects.create(
+            owner=request.user,
+            category=category,
+            amount=amount_int,
+            date=entry_date,
+        )
+        saved_name = category.name
+        saved_id = expense.id
+        toast_message = "支出を追加しました"
 
-    #今日かどうか　フロント側へ伝えて画面表示の分岐にする
+    selected_day_expenses = Expense.objects.filter(owner=request.user, date=entry_date)
+    selected_day_incomes = Income.objects.filter(owner=request.user, date=entry_date)
+
+    expense_total = selected_day_expenses.aggregate(total=Sum("amount"))["total"] or 0
+    income_total = selected_day_incomes.aggregate(total=Sum("amount"))["total"] or 0
+    selected_day_balance = income_total - expense_total
+    selected_day_count = selected_day_expenses.count() + selected_day_incomes.count()
+
     today = timezone.localdate()
 
     return JsonResponse({
-        #保存成功
         "success": True,
-        "expense_id": expense.id,
-        #何を保存したか
-        "amount": expense.amount,
-        "category_name": category.name,
-        "date": expense.date.isoformat(),
-        #画面の表示更新に使う
-        "selected_day_total": selected_day_total,
+        "entry_id": saved_id,
+        "entry_type": entry_type,
+        "amount": amount_int,
+        "category_name": saved_name,
+        "date": entry_date.isoformat(),
+        "expense_total": expense_total,
+        "income_total": income_total,
+        "selected_day_balance": selected_day_balance,
         "selected_day_count": selected_day_count,
         "selected_date": entry_date.isoformat(),
-        "selected_date_display": f"{entry_date.month}/{entry_date.day}",
         "is_today_input_date": entry_date == today,
-        #フロント側でトーストや演出を出すための材料
         "toast": {
-            "message": "追加しました",
+            "message": toast_message,
             "type": "created",
             "duration": 2600,
         }
     })
 
-#カテゴリ一覧を表示しつつ、設定も更新できる画面
 @login_required
 def category_list(request):
-    setting = get_app_setting()  #必ず1件ある設定を取得
+    setting = get_app_setting()
 
-    if request.method == "POST":  #POSTなら設定更新
-        #既存のsettingを更新する
+    if request.method == "POST":
         cycle_form = AppSettingForm(request.POST, instance=setting)
-        #1~31の範囲か？数字か？
         if cycle_form.is_valid():
-            #DB更新
             cycle_form.save()
-            #トースト表示
             flash_updated(request, "集計開始日を更新しました")
             return redirect("kakeibo:category_list")
-    
-    #現在の値をフォームに入れる
     else:
         cycle_form = AppSettingForm(instance=setting)
 
-    #自分のカテゴリだけ
     categories = Category.objects.filter(owner=request.user).annotate(
-        expense_count=Count("expenses")  #カテゴリごとの使用回数を追加
-    ).order_by("-expense_count", "name", "id")  #よく使うカテゴリが上に
+        expense_count=Count("expenses")
+    ).order_by("-expense_count", "name", "id")
 
-    category_count = categories.count()  #件数
+    income_categories = IncomeCategory.objects.filter(owner=request.user).annotate(
+        income_count=Count("incomes")
+    ).order_by("-income_count", "name", "id")
 
-    #テンプレートに渡す
     return render(request, "kakeibo/category_list.html", {
-        "categories": categories,                   #一覧表示
-        "category_count": category_count,           #〇件
-        "cycle_form": cycle_form,                   #入力欄
-        "cycle_start_day": setting.cycle_start_day, #表示用
+        "categories": categories,
+        "income_categories": income_categories,
+        "category_count": categories.count(),
+        "income_category_count": income_categories.count(),
+        "cycle_form": cycle_form,
+        "cycle_start_day": setting.cycle_start_day,
     })
 
 
@@ -467,9 +416,8 @@ def category_delete(request, pk):
 #1日単位の支出一覧と合計を表示する画面処理
 @login_required
 def history(request):
-    selected_date = request.GET.get("date")  #これはURLのクエリから日付を取ってる
+    selected_date = request.GET.get("date")
 
-#日付があれば文字列→date型に　変な形式or指定なしなら今日にする
     if selected_date:
         try:
             target_date = date.fromisoformat(selected_date)
@@ -478,27 +426,53 @@ def history(request):
     else:
         target_date = timezone.localdate()
 
-
-#自分のデータ＆指定日のデータだけ　カテゴリも一緒に取得
     expenses = Expense.objects.filter(
         owner=request.user,
         date=target_date
-    ).select_related("category").order_by("-created_at")  #新しいのが上に
+    ).select_related("category").order_by("-created_at")
 
-    #その日の合計金額も計算
-    total_amount = expenses.aggregate(total=Sum("amount"))["total"] or 0
+    incomes = Income.objects.filter(
+        owner=request.user,
+        date=target_date
+    ).select_related("category").order_by("-created_at")
 
-    #日付ナビ用　前日・翌日だから、基準日から１日ずらす
+    entries = []
+
+    for expense in expenses:
+        entries.append({
+            "kind": "expense",
+            "pk": expense.pk,
+            "category_name": expense.category.name,
+            "amount": expense.amount,
+            "created_at": expense.created_at,
+        })
+
+    for income in incomes:
+        entries.append({
+            "kind": "income",
+            "pk": income.pk,
+            "category_name": income.category.name,
+            "amount": income.amount,
+            "created_at": income.created_at,
+        })
+
+    entries.sort(key=lambda x: x["created_at"], reverse=True)
+
+    expense_total = expenses.aggregate(total=Sum("amount"))["total"] or 0
+    income_total = incomes.aggregate(total=Sum("amount"))["total"] or 0
+    total_balance = income_total - expense_total
+
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
 
-    #テンプレートに渡す
     return render(request, "kakeibo/history.html", {
-        "expenses": expenses,                     #その日の支出一覧
-        "selected_date": target_date.isoformat(), #文字列の日付
-        "target_date": target_date,               #date型の日付
-        "total_amount": total_amount,             #その日の合計
-        "prev_date": prev_date.isoformat(),       #前日・翌日への移動用
+        "entries": entries,
+        "selected_date": target_date.isoformat(),
+        "target_date": target_date,
+        "expense_total": expense_total,
+        "income_total": income_total,
+        "total_balance": total_balance,
+        "prev_date": prev_date.isoformat(),
         "next_date": next_date.isoformat(),
     })
 
@@ -682,6 +656,98 @@ def expense_delete(request, pk):
         "back_month": back_month,
     })
 
+@login_required
+def income_edit(request, pk):
+    income = get_object_or_404(
+        Income.objects.select_related("category"),
+        pk=pk,
+        owner=request.user
+    )
+
+    return_to = request.GET.get("return_to") or request.POST.get("return_to") or "history"
+    back_date = request.GET.get("date") or request.POST.get("back_date") or request.POST.get("date") or ""
+    back_year = request.GET.get("year") or request.POST.get("back_year") or request.POST.get("year") or ""
+    back_month = request.GET.get("month") or request.POST.get("back_month") or request.POST.get("month") or ""
+
+    if request.method == "POST":
+        form = IncomeEditForm(request.POST, instance=income, user=request.user)
+        if form.is_valid():
+            updated_income = form.save(commit=False)
+
+            if updated_income.category.owner != request.user:
+                messages.error(request, "不正な項目です")
+                return redirect("kakeibo:history")
+
+            updated_income.owner = request.user
+            updated_income.save()
+
+            flash_updated(request, "収入を更新しました")
+
+            if return_to == "summary":
+                if back_year and back_month:
+                    return redirect(f"/summary/?year={back_year}&month={back_month}")
+                return redirect("kakeibo:summary")
+
+            if return_to == "month_history":
+                if back_year and back_month:
+                    return redirect(f"/month-history/?year={back_year}&month={back_month}")
+                return redirect("kakeibo:month_history")
+
+            if back_date:
+                return redirect(f"/history/?date={back_date}")
+            return redirect("kakeibo:history")
+    else:
+        form = IncomeEditForm(instance=income, user=request.user)
+
+    return render(request, "kakeibo/expense_form.html", {
+        "form": form,
+        "expense": income,
+        "page_title": "収入編集",
+        "return_to": return_to,
+        "back_date": back_date,
+        "back_year": back_year,
+        "back_month": back_month,
+    })
+
+
+@login_required
+def income_delete(request, pk):
+    income = get_object_or_404(
+        Income.objects.select_related("category"),
+        pk=pk,
+        owner=request.user
+    )
+
+    return_to = request.GET.get("return_to") or request.POST.get("return_to") or "history"
+    back_date = request.GET.get("date") or request.POST.get("back_date") or request.POST.get("date") or ""
+    back_year = request.GET.get("year") or request.POST.get("back_year") or request.POST.get("year") or ""
+    back_month = request.GET.get("month") or request.POST.get("back_month") or request.POST.get("month") or ""
+
+    if request.method == "POST":
+        income.delete()
+        flash_deleted(request, "収入を削除しました")
+
+        if return_to == "summary":
+            if back_year and back_month:
+                return redirect(f"/summary/?year={back_year}&month={back_month}")
+            return redirect("kakeibo:summary")
+
+        if return_to == "month_history":
+            if back_year and back_month:
+                return redirect(f"/month-history/?year={back_year}&month={back_month}")
+            return redirect("kakeibo:month_history")
+
+        if back_date:
+            return redirect(f"/history/?date={back_date}")
+        return redirect("kakeibo:history")
+
+    return render(request, "kakeibo/expense_confirm_delete.html", {
+        "expense": income,
+        "return_to": return_to,
+        "back_date": back_date,
+        "back_year": back_year,
+        "back_month": back_month,
+    })
 
 @login_required
 def get_summary(request):
@@ -689,20 +755,22 @@ def get_summary(request):
     setting = get_app_setting()
     cycle_start, cycle_end = get_cycle_range(today, setting.cycle_start_day)
 
-    today_total = Expense.objects.filter(
+    expense_total = Expense.objects.filter(
         owner=request.user,
-        date=today
+        date__gte=cycle_start,
+        date__lt=cycle_end
     ).aggregate(total=Sum("amount"))["total"] or 0
 
-    month_total = Expense.objects.filter(
+    income_total = Income.objects.filter(
         owner=request.user,
         date__gte=cycle_start,
         date__lt=cycle_end
     ).aggregate(total=Sum("amount"))["total"] or 0
 
     return JsonResponse({
-        "today_total": today_total,
-        "month_total": month_total,
+        "expense_total": expense_total,
+        "income_total": income_total,
+        "balance": income_total - expense_total,
     })
 
 #集計画面
@@ -715,18 +783,9 @@ def summary(request):
         request.GET.get("year"),
         request.GET.get("month"),
     )
-
     target_date = date(selected_year, selected_month, 1)
 
     cycle_start, cycle_end = get_cycle_range(target_date, setting.cycle_start_day)
-
-    today_expenses = Expense.objects.filter(
-        owner=request.user,
-        date=today
-    ).select_related("category").order_by("-created_at")
-
-    today_total = today_expenses.aggregate(total=Sum("amount"))["total"] or 0
-    today_count = today_expenses.count()
 
     cycle_expenses = Expense.objects.filter(
         owner=request.user,
@@ -734,32 +793,28 @@ def summary(request):
         date__lt=cycle_end
     ).select_related("category").order_by("-date", "-created_at")
 
-    month_total = cycle_expenses.aggregate(total=Sum("amount"))["total"] or 0
-    month_count = cycle_expenses.count()
+    cycle_incomes = Income.objects.filter(
+        owner=request.user,
+        date__gte=cycle_start,
+        date__lt=cycle_end
+    ).select_related("category").order_by("-date", "-created_at")
 
-    grouped_dict = defaultdict(list)
-    for expense in cycle_expenses:
-        grouped_dict[expense.date].append(expense)
+    expense_total = cycle_expenses.aggregate(total=Sum("amount"))["total"] or 0
+    income_total = cycle_incomes.aggregate(total=Sum("amount"))["total"] or 0
+    balance_total = income_total - expense_total
 
-    grouped_daily_expenses = []
-    for day, items in sorted(grouped_dict.items(), reverse=True):
-        day_total = sum(item.amount for item in items)
-        grouped_daily_expenses.append({
-            "date": day,
-            "expenses": items,
-            "total": day_total,
-            "count": len(items),
-        })
+    expense_count = cycle_expenses.count()
+    income_count = cycle_incomes.count()
 
-    raw_category_totals = (
+    raw_expense_category_totals = (
         cycle_expenses
         .values("category", "category__name", "category__budget")
         .annotate(total=Sum("amount"), count=Count("id"))
         .order_by("-total", "category__name")
     )
 
-    category_totals = []
-    for item in raw_category_totals:
+    expense_category_totals = []
+    for item in raw_expense_category_totals:
         budget = item["category__budget"] or 0
         total = item["total"] or 0
 
@@ -772,7 +827,7 @@ def summary(request):
             bar_percent = 0
             is_over_budget = False
 
-        category_totals.append({
+        expense_category_totals.append({
             "category_id": item["category"],
             "category_name": item["category__name"],
             "count": item["count"],
@@ -784,27 +839,75 @@ def summary(request):
             "has_budget": budget > 0,
         })
 
-    prev_year, prev_month, next_year, next_month = get_month_navigation(selected_year, selected_month)
+    # 収入カテゴリ別
+    income_category_totals = (
+        cycle_incomes
+        .values("category", "category__name")
+        .annotate(total=Sum("amount"), count=Count("id"))
+        .order_by("-total", "category__name")
+    )
 
+    # 日ごと履歴（支出＋収入をまとめる）
+    grouped_dict = defaultdict(list)
+
+    for expense in cycle_expenses:
+        grouped_dict[expense.date].append({
+            "kind": "expense",
+            "pk": expense.pk,
+            "category_name": expense.category.name,
+            "amount": expense.amount,
+            "created_at": expense.created_at,
+        })
+
+    for income in cycle_incomes:
+        grouped_dict[income.date].append({
+            "kind": "income",
+            "pk": income.pk,
+            "category_name": income.category.name,
+            "amount": income.amount,
+            "created_at": income.created_at,
+        })
+
+    grouped_daily_entries = []
+    for day, items in sorted(grouped_dict.items(), reverse=True):
+        items.sort(key=lambda x: x["created_at"], reverse=True)
+
+        day_expense_total = sum(item["amount"] for item in items if item["kind"] == "expense")
+        day_income_total = sum(item["amount"] for item in items if item["kind"] == "income")
+        day_balance = day_income_total - day_expense_total
+
+        grouped_daily_entries.append({
+            "date": day,
+            "entries": items,
+            "expense_total": day_expense_total,
+            "income_total": day_income_total,
+            "balance": day_balance,
+            "count": len(items),
+        })
+
+    prev_year, prev_month, next_year, next_month = get_month_navigation(selected_year, selected_month)
     is_current_view = (selected_year == today.year and selected_month == today.month)
     year_choices = get_summary_year_choices(request.user, today.year)
     month_choices = list(range(1, 13))
 
     return render(request, "kakeibo/summary.html", {
         "today": today,
-        "today_total": today_total,
-        "today_count": today_count,
-
         "selected_year": selected_year,
         "selected_month": selected_month,
         "is_current_view": is_current_view,
 
-        "month_total": month_total,
-        "month_count": month_count,
+        "expense_total": expense_total,
+        "income_total": income_total,
+        "balance_total": balance_total,
+        "expense_count": expense_count,
+        "income_count": income_count,
+
+        "expense_category_totals": expense_category_totals,
+        "income_category_totals": income_category_totals,
+        "grouped_daily_entries": grouped_daily_entries,
+
         "cycle_start_date": cycle_start,
         "cycle_end_date": cycle_end - timedelta(days=1),
-        "grouped_daily_expenses": grouped_daily_expenses,
-        "category_totals": category_totals,
 
         "prev_year": prev_year,
         "prev_month": prev_month,
@@ -931,3 +1034,61 @@ self.addEventListener("fetch", (event) => {{
 }});
 """.strip()
     return HttpResponse(js, content_type="application/javascript")
+
+
+@login_required
+def income_category_create(request):
+    if request.method == "POST":
+        form = IncomeCategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.owner = request.user
+            category.save()
+            flash_created(request, "収入項目を追加しました")
+            return redirect("kakeibo:category_list")
+    else:
+        form = IncomeCategoryForm()
+
+    return render(request, "kakeibo/category_form.html", {
+        "form": form,
+        "page_title": "収入項目を追加",
+        "is_first_category": False,
+        "is_income": True,
+    })
+
+
+@login_required
+def income_category_edit(request, pk):
+    category = get_object_or_404(IncomeCategory, pk=pk, owner=request.user)
+
+    if request.method == "POST":
+        form = IncomeCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            updated.owner = request.user
+            updated.save()
+            flash_updated(request, "収入項目を更新しました")
+            return redirect("kakeibo:category_list")
+    else:
+        form = IncomeCategoryForm(instance=category)
+
+    return render(request, "kakeibo/category_form.html", {
+        "form": form,
+        "page_title": "収入項目を編集",
+        "is_first_category": False,
+        "is_income": True,
+    })
+
+
+@login_required
+def income_category_delete(request, pk):
+    category = get_object_or_404(IncomeCategory, pk=pk, owner=request.user)
+
+    if request.method == "POST":
+        category.delete()
+        flash_deleted(request, "収入項目を削除しました")
+        return redirect("kakeibo:category_list")
+
+    return render(request, "kakeibo/category_confirm_delete.html", {
+        "category": category,
+    })

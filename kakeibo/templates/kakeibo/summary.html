@@ -26,6 +26,7 @@
                     <select name="year" class="inline-select"
                         onchange="location.href='?year='+this.value+'&month={{ selected_month }}'">
                         {% for y in year_choices %}
+                        <!-- prettier-ignore -->
                         <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
                             {{ y }}
                         </option>
@@ -35,6 +36,7 @@
                     <select name="month" class="inline-select"
                         onchange="location.href='?year={{ selected_year }}&month='+this.value">
                         {% for m in month_choices %}
+                        <!-- prettier-ignore -->
                         <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
                             {{ m }}
                         </option>
@@ -54,73 +56,127 @@
 
                 <section class="summary-card glass-card month-main-card">
                     <div class="summary-label">
-                        {{ selected_year }}年{{ selected_month }}月の支出合計
+                        {{ selected_year }}年{{ selected_month }}月の収支
                         {% if is_current_view %}
                         <span class="summary-inline-note">（{{ today|date:"n/j" }}現在）</span>
                         {% endif %}
                     </div>
 
-                    <div class="summary-amount">{{ month_total|intcomma }}円</div>
+                    <div class="summary-amount {% if balance_total < 0 %}is-minus{% endif %}">
+                        {{ balance_total|intcomma }}円
+                    </div>
+
+                    <div class="summary-dual-meta">
+    <div class="summary-mini summary-expense">
+        <div class="summary-mini-label">支出計</div>
+        <div class="summary-mini-amount">{{ expense_total|intcomma }}円</div>
+    </div>
+
+    <div class="summary-mini summary-income">
+        <div class="summary-mini-label">収入計</div>
+        <div class="summary-mini-amount">{{ income_total|intcomma }}円</div>
+    </div>
+</div>
 
                     <div class="summary-meta">
-                        集計期間：{{ cycle_start_date|date:"n/j" }} 〜 {{ cycle_end_date|date:"n/j" }} ／ 入力 {{ month_count }}件
+                        集計期間：{{ cycle_start_date|date:"n/j" }} 〜 {{ cycle_end_date|date:"n/j" }}
                     </div>
                 </section>
 
                 <section class="section-card glass-card">
                     <div class="section-head">
                         <div>
-                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別合計</div>
-                            <div class="section-subtitle">件数と合計金額を表示</div>
+                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別の支出</div>
+                            <div class="section-subtitle">支出ごとの件数と合計金額</div>
                         </div>
                     </div>
 
-                    {% if category_totals %}
-                    <div class="category-total-list">
-                        {% for item in category_totals %}
-                        <div class="category-total-row">
-                            <div class="category-total-main">
-                                <div class="category-left">
-                                    <div class="category-dot"></div>
+                    {% if expense_category_totals %}
+<div class="category-total-list">
+    {% for item in expense_category_totals %}
+    <div class="category-total-row">
+        <div class="category-total-main">
+            <div class="category-left">
+                <div class="category-dot expense-dot"></div>
 
-                                    <div class="category-name-wrap">
-                                        <div class="category-total-name">{{ item.category_name }}</div>
+                <div class="category-name-wrap">
+                    <div class="category-total-name">{{ item.category_name }}</div>
 
-                                        <div class="category-total-bar-track">
-                                            {% if item.has_budget %}
-                                            <div class="category-total-bar-fill {% if item.is_over_budget %}is-over{% endif %}"
-                                                style="width: {{ item.bar_percent }}%;"></div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="category-total-right">
-                                    <div class="category-total-amount">{{ item.total|intcomma }}円</div>
-                                    <div class="category-total-count">{{ item.count }}件</div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+                    <div class="category-total-bar-track">
+                        {% if item.has_budget %}
+                        <div class="category-total-bar-fill {% if item.is_over_budget %}is-over{% endif %}"
+                            style="width: {{ item.bar_percent }}%;"></div>
+                        {% endif %}
                     </div>
+                </div>
+            </div>
+
+            <div class="category-total-right">
+                <div class="category-total-amount">{{ item.total|intcomma }}円</div>
+                <div class="category-total-count">
+                    {% if item.has_budget %}
+                    予算 {{ item.budget|intcomma }}円
                     {% else %}
-                    <div class="empty-box">
-                        カテゴリ別集計はまだありません
-                    </div>
+                    予算なし
                     {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-box">
+    支出カテゴリ別集計はまだありません
+</div>
+{% endif %}
+                </section>
+
+                <section class="section-card glass-card">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別の収入</div>
+                            <div class="section-subtitle">収入ごとの件数と合計金額</div>
+                        </div>
+                    </div>
+
+                    {% if income_category_totals %}
+<div class="category-total-list">
+    {% for item in income_category_totals %}
+    <div class="category-total-row income-row">
+        <div class="category-total-main">
+            <div class="category-left">
+                <div class="category-dot income-dot"></div>
+                <div class="category-name-wrap">
+                    <div class="category-total-name">{{ item.category__name }}</div>
+                </div>
+            </div>
+
+            <div class="category-total-right">
+                <div class="category-total-amount income-amount">{{ item.total|intcomma }}円</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-box">
+    収入カテゴリ別集計はまだありません
+</div>
+{% endif %}
                 </section>
 
                 <section class="section-card glass-card">
                     <div class="section-head">
                         <div>
                             <div class="section-title">{{ selected_year }}年{{ selected_month }}月の日ごと履歴</div>
-                            <div class="section-subtitle">タップで明細を開閉できます</div>
+                            <div class="section-subtitle">支出と収入をまとめて表示します</div>
                         </div>
                     </div>
 
-                    {% if grouped_daily_expenses %}
+                    {% if grouped_daily_entries %}
                     <div class="daily-list">
-                        {% for day_group in grouped_daily_expenses %}
+                        {% for day_group in grouped_daily_entries %}
                         <details class="day-card">
                             <summary class="day-summary">
                                 <div class="day-left">
@@ -129,18 +185,13 @@
                                 </div>
 
                                 <div class="day-right">
-    <div class="day-total">{{ day_group.total|intcomma }}円</div>
-
-    <!-- 👇 追加：目アイコン -->
-    <a href="{% url 'kakeibo:history' %}?date={{ day_group.date|date:'Y-m-d' }}"
-        class="icon-action-btn"
-        aria-label="詳細を見る"
-        title="詳細を見る">
-        <i class="bi bi-eye"></i>
-    </a>
-
-    <!-- 👇 既存：開閉 -->
-    <div class="day-toggle-icons">
+                                    <div class="day-balance {% if day_group.balance < 0 %}is-minus{% endif %}">
+                                        {{ day_group.balance|intcomma }}円
+                                    </div>
+                                    <div class="day-breakdown">
+                                        収入 {{ day_group.income_total|intcomma }} / 支出 {{ day_group.expense_total|intcomma }}
+                                    </div>
+                                    <div class="day-toggle-icons">
                                         <span class="toggle-icon toggle-open" aria-label="明細を開く">
                                             <i class="bi bi-chevron-down"></i>
                                         </span>
@@ -152,31 +203,56 @@
                             </summary>
 
                             <div class="day-detail">
-                                {% for expense in day_group.expenses %}
-                                <div class="expense-item">
+                                {% for entry in day_group.entries %}
+                                <div class="expense-item {% if entry.kind == 'income' %}income-entry{% endif %}">
                                     <div class="expense-row">
                                         <div class="expense-left">
-                                            <div class="expense-category">{{ expense.category.name }}</div>
-                                            <div class="expense-time">{{ expense.created_at|date:"H:i" }}</div>
+                                            <div class="expense-kind-line">
+                                                {% if entry.kind == "income" %}
+                                                <span class="kind-chip income-chip">収入</span>
+                                                {% else %}
+                                                <span class="kind-chip expense-chip">支出</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="expense-category">{{ entry.category_name }}</div>
+                                            <div class="expense-time">{{ entry.created_at|date:"H:i" }}</div>
                                         </div>
 
                                         <div class="expense-right">
-                                            <div class="expense-amount">{{ expense.amount|intcomma }}円</div>
+                                            <div class="expense-amount {% if entry.kind == 'income' %}income-amount{% endif %}">
+                                                {{ entry.amount|intcomma }}円
+                                            </div>
 
                                             <div class="expense-actions">
-                                                <a href="{% url 'kakeibo:expense_edit' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
-                                                    class="icon-action-btn edit-btn summary-edit-link"
+                                                {% if entry.kind == "income" %}
+                                                <a href="{% url 'kakeibo:income_edit' entry.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn edit-btn"
                                                     aria-label="編集"
                                                     title="編集">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
 
-                                                <a href="{% url 'kakeibo:expense_delete' expense.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
-                                                    class="icon-action-btn delete-btn summary-delete-link"
+                                                <a href="{% url 'kakeibo:income_delete' entry.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn delete-btn"
                                                     aria-label="削除"
                                                     title="削除">
                                                     <i class="bi bi-trash3"></i>
                                                 </a>
+                                                {% else %}
+                                                <a href="{% url 'kakeibo:expense_edit' entry.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn edit-btn"
+                                                    aria-label="編集"
+                                                    title="編集">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+
+                                                <a href="{% url 'kakeibo:expense_delete' entry.pk %}?return_to=summary&year={{ selected_year }}&month={{ selected_month }}"
+                                                    class="icon-action-btn delete-btn"
+                                                    aria-label="削除"
+                                                    title="削除">
+                                                    <i class="bi bi-trash3"></i>
+                                                </a>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -188,7 +264,7 @@
                     </div>
                     {% else %}
                     <div class="empty-box">
-                        この期間の支出はまだありません
+                        この期間の入力はまだありません
                     </div>
                     {% endif %}
                 </section>
@@ -200,7 +276,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_css %}
 <style>
     :root {
         --bg1: #0f1117;
@@ -377,8 +455,53 @@
         word-break: break-all;
     }
 
+    .summary-amount.is-minus {
+        color: #ff8b84;
+    }
+
+    .summary-dual-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .summary-mini {
+        padding: 12px 12px 10px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .summary-income {
+        background: linear-gradient(180deg, rgba(52, 199, 89, 0.14), rgba(255, 255, 255, 0.04));
+    }
+
+    .summary-expense {
+        background: linear-gradient(180deg, rgba(255, 69, 58, 0.14), rgba(255, 255, 255, 0.04));
+    }
+
+    .summary-mini-label {
+        font-size: 0.78rem;
+        color: var(--text-sub);
+        font-weight: 700;
+    }
+
+    .summary-mini-amount {
+        margin-top: 6px;
+        font-size: 1.02rem;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .summary-mini-count {
+        margin-top: 2px;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.58);
+    }
+
     .summary-meta {
-        margin-top: 8px;
+        margin-top: 12px;
         font-size: 0.88rem;
         color: var(--text-sub);
     }
@@ -418,6 +541,10 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    .income-row {
+        background: linear-gradient(180deg, rgba(52, 199, 89, 0.10), rgba(255, 255, 255, 0.04));
+    }
+
     .category-total-main {
         display: flex;
         align-items: center;
@@ -437,11 +564,17 @@
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #5ac8fa, #34c759);
-        box-shadow:
-            0 0 6px rgba(90, 200, 250, 0.45),
-            0 0 10px rgba(52, 199, 89, 0.26);
         flex-shrink: 0;
+    }
+
+    .expense-dot {
+        background: linear-gradient(135deg, #ff8b84, #ff453a);
+        box-shadow: 0 0 8px rgba(255, 69, 58, 0.32);
+    }
+
+    .income-dot {
+        background: linear-gradient(135deg, #7cf2a0, #34c759);
+        box-shadow: 0 0 8px rgba(52, 199, 89, 0.32);
     }
 
     .category-name-wrap {
@@ -457,47 +590,10 @@
         word-break: break-word;
     }
 
-    .category-total-bar-track {
-        position: relative;
+    .category-total-sub {
         margin-top: 4px;
-        height: 6px;
-        width: 100%;
-        border-radius: 999px;
-        overflow: hidden;
-        background: rgba(255, 255, 255, 0.10);
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
-    }
-
-    .category-total-bar-fill {
-        height: 100%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #30d158 0%, #34c759 40%, #66e29a 100%);
-        box-shadow:
-            inset 0 1px 2px rgba(255, 255, 255, 0.35),
-            0 0 8px rgba(52, 199, 89, 0.35);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .category-total-bar-fill::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: -20%;
-        width: 38%;
-        background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(255, 255, 255, 0.22) 50%,
-                transparent 100%);
-        transform: skewX(-22deg);
-    }
-
-    .category-total-bar-fill.is-over {
-        background: linear-gradient(90deg, #ff3b30 0%, #ff453a 40%, #ff7b72 100%);
-        box-shadow:
-            inset 0 1px 2px rgba(255, 255, 255, 0.3),
-            0 0 8px rgba(255, 69, 58, 0.35);
+        font-size: 0.74rem;
+        color: rgba(255, 255, 255, 0.52);
     }
 
     .category-total-right {
@@ -516,6 +612,10 @@
         color: #fff;
         line-height: 1;
         white-space: nowrap;
+    }
+
+    .income-amount {
+        color: #9df4b6;
     }
 
     .category-total-count {
@@ -574,11 +674,21 @@
         flex-shrink: 0;
     }
 
-    .day-total {
+    .day-balance {
         font-size: 1rem;
         font-weight: 800;
         color: #fff;
         line-height: 1.1;
+    }
+
+    .day-balance.is-minus {
+        color: #ff8b84;
+    }
+
+    .day-breakdown {
+        margin-top: 4px;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.58);
     }
 
     .day-toggle-icons {
@@ -632,6 +742,11 @@
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
+    .income-entry {
+        background:
+            linear-gradient(180deg, rgba(52, 199, 89, 0.12), rgba(255, 255, 255, 0.04));
+    }
+
     .expense-row {
         display: flex;
         align-items: center;
@@ -642,6 +757,34 @@
     .expense-left {
         flex: 1;
         min-width: 0;
+    }
+
+    .expense-kind-line {
+        margin-bottom: 6px;
+    }
+
+    .kind-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+    }
+
+    .expense-chip {
+        background: rgba(255, 69, 58, 0.14);
+        color: #ffb2ac;
+        border: 1px solid rgba(255, 69, 58, 0.20);
+    }
+
+    .income-chip {
+        background: rgba(52, 199, 89, 0.14);
+        color: #bff7d0;
+        border: 1px solid rgba(52, 199, 89, 0.20);
     }
 
     .expense-category {
@@ -768,7 +911,7 @@
             font-size: 0.9rem;
         }
 
-        .day-total {
+        .day-balance {
             font-size: 0.94rem;
         }
 
@@ -797,29 +940,38 @@
             height: 30px;
             font-size: 0.84rem;
         }
+
+        .summary-dual-meta {
+            grid-template-columns: 1fr;
+        }
     }
+    .category-total-bar-track {
+    position: relative;
+    margin-top: 6px;
+    height: 6px;
+    width: 100%;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.category-total-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #30d158 0%, #34c759 40%, #66e29a 100%);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        0 0 8px rgba(52, 199, 89, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.category-total-bar-fill.is-over {
+    background: linear-gradient(90deg, #ff3b30 0%, #ff453a 40%, #ff7b72 100%);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        0 0 8px rgba(255, 69, 58, 0.35);
+}
 </style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const editLinks = document.querySelectorAll(".summary-edit-link");
-        const deleteLinks = document.querySelectorAll(".summary-delete-link");
-
-        editLinks.forEach(link => {
-            link.addEventListener("click", function () {
-                if (window.showPremiumToast) {
-                    window.showPremiumToast("編集画面を開きます", "info", 1200);
-                }
-            });
-        });
-
-        deleteLinks.forEach(link => {
-            link.addEventListener("click", function () {
-                if (window.showPremiumToast) {
-                    window.showPremiumToast("削除確認へ移動します", "warning", 1200);
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

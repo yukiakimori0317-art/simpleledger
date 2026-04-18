@@ -13,32 +13,43 @@
 
             <div class="page-head">
                 <div>
-                    <h1 class="page-title">項目設定</h1>
-                    <div class="page-sub">入力で使う項目を追加・編集できます</div>
+                    <h1 class="page-title page-title-with-icon">
+    <i class="bi bi-gear-fill"></i>
+    <span>設定のページ</span>
+</h1>
+                    
                 </div>
-                <div class="count-chip">{{ category_count }}件</div>
+                <div class="count-chip">
+                    支出 {{ category_count }}件 / 収入 {{ income_category_count }}件
+                </div>
             </div>
 
             <div class="glass-card hero-card">
                 <div class="hero-title">よく使う項目を整理できます</div>
                 <div class="hero-text">
-                    例：食費、カフェ、日用品、交通費など。
-                    短くてわかりやすい名前にすると、入力画面で選びやすくなります。
+                    支出項目は予算つき、収入項目は名前だけで管理します。
+                    入力画面では「支出 / 収入」を切り替えて使います。
                 </div>
                 <div class="hero-actions">
                     <a href="{% url 'kakeibo:category_create' %}" class="btn-add-main">
                         <i class="bi bi-plus-lg"></i>
-                        <span>項目を追加</span>
+                        <span>支出カテゴリ追加</span>
                     </a>
+
+                    <a href="{% url 'kakeibo:income_category_create' %}" class="btn-add-main btn-add-income">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>収入カテゴリ追加</span>
+                    </a>
+
                     <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
                         <i class="bi bi-calculator"></i>
-                        <span>入力画面へ戻る</span>
+                        <span>TOPへ戻る</span>
                     </a>
                 </div>
             </div>
 
             <div class="glass-card section-card">
-                <div class="section-title">集計開始日</div>
+                <div class="section-title">集計サイクル</div>
                 <div class="cycle-form-wrap">
                     <form method="post">
                         {% csrf_token %}
@@ -51,9 +62,9 @@
                         </div>
 
                         {% if cycle_form.cycle_start_day.errors %}
-                            <div class="field-note field-note-error">
-                                {{ cycle_form.cycle_start_day.errors|striptags }}
-                            </div>
+                        <div class="field-note field-note-error">
+                            {{ cycle_form.cycle_start_day.errors|striptags }}
+                        </div>
                         {% endif %}
 
                         <div class="field-note">
@@ -63,55 +74,94 @@
                 </div>
             </div>
 
+            <div class="section-heading">
+    <div class="section-kicker">EXPENSE</div>
+    <div class="section-title-main">支出カテゴリ</div>
+</div>
+
             {% if categories %}
             <div class="category-list">
                 {% for category in categories %}
-                <div class="category-item">
-                    <div class="category-row">
-                        <div class="category-icon-box">
-                            {% if category.icon %}
-                                <img src="{{ category.icon.url }}" alt="{{ category.name }}">
-                            {% else %}
-                                <div class="category-icon-fallback">
-                                    <i class="bi bi-image"></i>
-                                </div>
-                            {% endif %}
-                        </div>
+<div class="category-item">
+    <div class="category-name">{{ category.name }}</div>
 
-                        <div class="category-main">
-                            <div class="category-name">{{ category.name }}</div>
-                            <div class="category-meta">
-                                <div class="meta-chip">月予算 {{ category.budget|default:0 }}円</div>
-                                <div class="meta-chip">{{ category.expense_count }}件</div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="category-bottom-row">
+        <div class="category-meta compact-meta">
+            <div class="meta-chip">月予算 {{ category.budget|default:0 }}円</div>
+            <div class="meta-chip">{{ category.expense_count }}件</div>
+        </div>
 
-                    <div class="category-actions">
-                        <a href="{% url 'kakeibo:category_edit' category.pk %}" class="btn-action btn-edit">
-                            <i class="bi bi-pencil-square"></i>
-                            <span>編集</span>
-                        </a>
-                        <a href="{% url 'kakeibo:category_delete' category.pk %}" class="btn-action btn-delete">
-                            <i class="bi bi-trash3"></i>
-                            <span>削除</span>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
+        <div class="category-actions compact-actions">
+            <a href="{% url 'kakeibo:category_edit' category.pk %}" class="btn-action btn-edit">
+                <i class="bi bi-pencil-square"></i>
+                <span>編集</span>
+            </a>
+            <a href="{% url 'kakeibo:category_delete' category.pk %}" class="btn-action btn-delete">
+                <i class="bi bi-trash3"></i>
+                <span>削除</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}
             </div>
             {% else %}
             <div class="glass-card empty-card">
                 <div class="empty-icon">
-                    <i class="bi bi-grid-3x3-gap"></i>
+                    <i class="bi bi-wallet2"></i>
                 </div>
-                <div class="empty-title">項目がまだありません</div>
+                <div class="empty-title">支出項目がまだありません</div>
                 <div class="empty-text">
                     最初に1つ作ると、入力画面からすぐ記録できるようになります。
                 </div>
                 <a href="{% url 'kakeibo:category_create' %}" class="btn-add-main">
                     <i class="bi bi-plus-lg"></i>
-                    <span>最初の項目を作る</span>
+                    <span>最初の支出項目を作る</span>
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="section-heading income-heading">
+    <div class="section-kicker">INCOME</div>
+    <div class="section-title-main">収入カテゴリ</div>
+</div>
+
+            {% if income_categories %}
+            <div class="category-list">
+               {% for category in income_categories %}
+<div class="category-item income-item">
+    <div class="category-name">{{ category.name }}</div>
+
+    <div class="category-bottom-row">
+        <div class="category-meta compact-meta">
+        </div>
+
+        <div class="category-actions compact-actions">
+            <a href="{% url 'kakeibo:income_category_edit' category.pk %}" class="btn-action btn-edit btn-edit-income">
+                <i class="bi bi-pencil-square"></i>
+                <span>編集</span>
+            </a>
+            <a href="{% url 'kakeibo:income_category_delete' category.pk %}" class="btn-action btn-delete btn-delete-income">
+                <i class="bi bi-trash3"></i>
+                <span>削除</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-card empty-card income-empty-card">
+                <div class="empty-icon income-empty-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="empty-title">収入項目はまだありません</div>
+                <div class="empty-text">
+                    例：給料、副収入、立替返金など。収入項目には予算はありません。
+                </div>
+                <a href="{% url 'kakeibo:income_category_create' %}" class="btn-add-main btn-add-income">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>最初の収入項目を作る</span>
                 </a>
             </div>
             {% endif %}
@@ -144,6 +194,8 @@
         --text-sub: rgba(255, 255, 255, 0.62);
         --accent-blue-1: #72c6f1;
         --accent-blue-2: #2f7ea7;
+        --accent-green-1: #57d97c;
+        --accent-green-2: #219653;
         --accent-red-1: #ff6b6b;
         --accent-red-2: #cc3d3d;
         --shadow-soft: 0 10px 26px rgba(0, 0, 0, 0.22);
@@ -304,6 +356,11 @@
         transform: translateY(1px);
     }
 
+    .btn-add-income {
+        background:
+            linear-gradient(180deg, rgba(87, 217, 124, 0.98), rgba(33, 150, 83, 0.98));
+    }
+
     .btn-back-soft {
         display: inline-flex;
         align-items: center;
@@ -329,7 +386,7 @@
 
     .section-card {
         padding: 16px 14px;
-        margin-bottom: 14px;
+        margin-bottom: 18px;
     }
 
     .section-title {
@@ -427,40 +484,28 @@
         transform: translateY(1px);
     }
 
-    .empty-card {
-        padding: 24px 18px;
-        text-align: center;
-    }
-
-    .empty-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 14px;
-        border-radius: 20px;
+    .section-label-wrap {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.45rem;
-        color: #9ae6ff;
-        background:
-            linear-gradient(180deg, rgba(114, 198, 241, 0.22), rgba(47, 126, 167, 0.16));
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.14),
-            0 10px 20px rgba(0, 0, 0, 0.14);
+        justify-content: space-between;
+        gap: 10px;
+        margin: 18px 4px 10px;
     }
 
-    .empty-title {
-        font-size: 1.02rem;
+    .section-label-income {
+        margin-top: 22px;
+    }
+
+    .section-label-main {
+        font-size: 1rem;
         font-weight: 800;
-        margin-bottom: 8px;
+        color: #fff;
     }
 
-    .empty-text {
-        font-size: 0.92rem;
-        line-height: 1.7;
-        color: var(--text-sub);
-        margin-bottom: 16px;
+    .section-label-sub {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.56);
     }
 
     .category-list {
@@ -490,42 +535,18 @@
         pointer-events: none;
     }
 
+    .income-item {
+        background:
+            linear-gradient(180deg, rgba(87, 217, 124, 0.10), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(87, 217, 124, 0.16);
+    }
+
     .category-row {
         position: relative;
         z-index: 1;
         display: flex;
         align-items: center;
         gap: 12px;
-    }
-
-    .category-icon-box {
-        width: 62px;
-        height: 62px;
-        flex-shrink: 0;
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.10),
-            0 8px 18px rgba(0, 0, 0, 0.12);
-    }
-
-    .category-icon-box img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        display: block;
-        padding: 6px;
-    }
-
-    .category-icon-fallback {
-        font-size: 1.2rem;
-        color: rgba(255, 255, 255, 0.75);
     }
 
     .category-main {
@@ -540,6 +561,40 @@
         line-height: 1.3;
         word-break: break-word;
     }
+
+    .category-item {
+    padding: 12px 14px;
+}
+
+.category-bottom-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.compact-meta {
+    margin-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-actions {
+    margin-top: 0;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    min-height: 30px;
+    padding: 0 9px;
+    border-radius: 10px;
+    font-size: 0.74rem;
+}
 
     .category-meta {
         margin-top: 6px;
@@ -560,6 +615,12 @@
         color: rgba(255, 255, 255, 0.78);
         font-size: 0.78rem;
         font-weight: 700;
+    }
+
+    .income-chip {
+        background: rgba(87, 217, 124, 0.12);
+        border-color: rgba(87, 217, 124, 0.18);
+        color: #d7ffe2;
     }
 
     .category-actions {
@@ -594,13 +655,69 @@
             linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
     }
 
+    .btn-edit-income {
+        background:
+            linear-gradient(180deg, rgba(87, 217, 124, 0.95), rgba(33, 150, 83, 0.95));
+    }
+
     .btn-delete {
+        background:
+            linear-gradient(180deg, rgba(255, 107, 107, 0.95), rgba(204, 61, 61, 0.95));
+    }
+
+    .btn-delete-income {
         background:
             linear-gradient(180deg, rgba(255, 107, 107, 0.95), rgba(204, 61, 61, 0.95));
     }
 
     .btn-action:active {
         transform: translateY(1px);
+    }
+
+    .empty-card {
+        padding: 24px 18px;
+        text-align: center;
+    }
+
+    .income-empty-card {
+        margin-bottom: 8px;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 14px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.45rem;
+        color: #9ae6ff;
+        background:
+            linear-gradient(180deg, rgba(114, 198, 241, 0.22), rgba(47, 126, 167, 0.16));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            0 10px 20px rgba(0, 0, 0, 0.14);
+    }
+
+    .income-empty-icon {
+        color: #d7ffe2;
+        background:
+            linear-gradient(180deg, rgba(87, 217, 124, 0.24), rgba(33, 150, 83, 0.18));
+    }
+
+    .empty-title {
+        font-size: 1.02rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .empty-text {
+        font-size: 0.92rem;
+        line-height: 1.7;
+        color: var(--text-sub);
+        margin-bottom: 16px;
     }
 
     .bottom-nav {
@@ -659,16 +776,6 @@
             padding-right: 14px;
         }
 
-        .category-row {
-            align-items: flex-start;
-        }
-
-        .category-icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-        }
-
         .cycle-inline-row {
             gap: 6px;
         }
@@ -692,6 +799,65 @@
             padding: 0 9px;
             font-size: 0.74rem;
         }
+
+        .hero-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .count-chip {
+            font-size: 0.76rem;
+            padding: 0 10px;
+        }
     }
+
+.page-title-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-heading {
+    margin: 22px 6px 12px;
+    position: relative;
+    padding-left: 10px;
+}
+
+.section-heading::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 3px;
+    height: 20px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #7fd6ff, #3aa0ff);
+    opacity: 0.9;
+}
+
+.income-heading::before {
+    background: linear-gradient(180deg, #6dffb0, #2ecc71);
+}
+
+.section-kicker {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 4px;
+}
+
+.section-title-main {
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+/* 収入だけちょっと色変える */
+.income-heading .section-kicker {
+    color: rgba(120, 230, 170, 0.75);
+}
+    
 </style>
 {% endblock %}

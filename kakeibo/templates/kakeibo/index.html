@@ -5,94 +5,99 @@
 
 {% block content %}
 <div class="ledger-page">
-    <div class="container px-3 pt-3 pb-5">
-
-        <div class="page-logo-wrap">
-            <div class="page-logo">SIMPLELEDGER</div>
-        </div>
+    <div class="container px-3 pt-2 pb-5">
 
         <div class="calc-shell mx-auto">
             <div class="calc-top-glow"></div>
 
-            <div class="today-summary-card mx-auto mt-3">
-                <div class="today-summary-top">
-                    <div class="today-summary-heading-wrap">
-                        <div class="today-summary-sub" id="summary-date-text">
-                            {{ target_date|date:"Y年n月j日" }}
-                        </div>
-                    </div>
+            <div class="today-summary-card mx-auto mt-1">
+    <div class="today-summary-top">
+        
 
-                    <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}"
-                        id="summary-state-chip">
-                        {% if is_today_input_date %}
-                        TODAY
-                        {% else %}
-                        PAST
-                        {% endif %}
-                    </div>
-                </div>
+        <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}"
+            id="summary-state-chip">
+            {% if is_today_input_date %}
+            TODAY
+            {% else %}
+            PAST
+            {% endif %}
+        </div>
+    </div>
 
-                <div class="today-summary-main">
-                    <div class="today-summary-amount" id="summary-amount">
-                        {{ selected_day_total|intcomma }}円
-                    </div>
-                    <div class="today-summary-count" id="summary-count">
-                        {{ selected_day_count }}件
-                    </div>
-                </div>
+    <div class="today-summary-main">
+        <div class="today-summary-amount" id="summary-expense-total">
+            {{ expense_total|intcomma }}円
+        </div>
+    </div>
 
-                <div class="today-summary-divider"></div>
+    <div class="today-summary-divider"></div>
 
-                <div class="today-summary-bottom">
-                    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
-                        aria-label="前日">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
+    <div class="today-summary-bottom">
+        <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
+            aria-label="前日">
+            <i class="bi bi-chevron-left"></i>
+        </a>
 
-                    <form method="get" class="entry-date-form" id="entry-date-form">
-                        <input type="date" name="date" id="entry-date-input" class="entry-date-input"
-                            value="{{ target_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
-                    </form>
+        <form method="get" class="entry-date-form" id="entry-date-form">
+            <input type="date" name="date" id="entry-date-input" class="entry-date-input"
+                value="{{ target_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+        </form>
 
-                    {% if can_go_next %}
-                    <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn"
-                        aria-label="翌日">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                    {% else %}
-                    <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    {% endif %}
-                </div>
+        {% if can_go_next %}
+        <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn"
+            aria-label="翌日">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        {% endif %}
+    </div>
 
-                <div class="today-summary-actions">
-                    {% if not is_today_input_date %}
-                    <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>今日に戻す</span>
-                    </a>
-                    {% endif %}
+    <div class="today-summary-actions">
+        {% if not is_today_input_date %}
+        <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>今日に戻す</span>
+        </a>
+        {% endif %}
 
-                    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
-                        class="mini-action-btn mini-action-history">
-                        <i class="bi bi-clock-history"></i>
-                        <span>この日の履歴</span>
-                    </a>
-                </div>
-            </div>
-
+        <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
+   class="mini-action-btn mini-action-history">
+    <i class="bi bi-journal-text"></i>
+    <div>
+        <div class="mini-label">Daily Log</div>
+        <span>この日の記録</span>
+    </div>
+</a>
+    </div>
+</div>
             <div class="calc-inner">
+                <div class="entry-type-toggle" id="entry-type-toggle">
+    <div class="toggle-track">
+        <div class="toggle-thumb" id="toggle-thumb"></div>
+
+        <button type="button" class="toggle-btn is-active" id="type-expense-btn">
+            支出
+        </button>
+        <button type="button" class="toggle-btn" id="type-income-btn">
+            収入
+        </button>
+    </div>
+</div>
+
 
                 <div class="display-panel">
                     <div class="amount-display" id="amount-display">0円</div>
                     <div class="formula-display" id="formula-display">&nbsp;</div>
                 </div>
 
-                <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_expense' %}">
+                <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_entry' %}">
                     {% csrf_token %}
                     <input type="hidden" name="amount" id="hidden-amount">
                     <input type="hidden" name="category" id="hidden-category">
+                    <input type="hidden" name="entry_type" id="hidden-entry-type" value="expense">
                     <input type="hidden" name="entry_date" id="hidden-entry-date"
                         value="{{ target_date|date:'Y-m-d' }}">
                 </form>
@@ -101,8 +106,10 @@
                     <button type="button" class="calc-btn calc-util resin-btn" data-action="clear">AC</button>
                     <button type="button" class="calc-btn calc-util resin-btn" data-action="delete">Del</button>
                     <button type="button" class="calc-btn calc-item resin-btn" id="open-category-btn"
-                        data-category-count="{{ categories|length }}"
-                        data-category-create-url="{% url 'kakeibo:category_create' %}">
+                        data-expense-count="{{ expense_categories|length }}"
+                        data-income-count="{{ income_categories|length }}"
+                        data-expense-create-url="{% url 'kakeibo:category_create' %}"
+                        data-income-create-url="{% url 'kakeibo:income_category_create' %}">
                         項目
                     </button>
                     <button type="button" class="calc-btn calc-operator resin-btn" data-value="/">÷</button>
@@ -143,8 +150,8 @@
             <button type="button" class="drawer-close" id="close-category-btn">✕</button>
         </div>
 
-        <div class="category-grid">
-            {% for category in categories %}
+        <div class="category-grid" id="expense-category-grid">
+            {% for category in expense_categories %}
             <button type="button" class="category-btn" data-category-id="{{ category.id }}"
                 data-category-name="{{ category.name }}">
                 <div class="category-btn-inner">
@@ -153,42 +160,51 @@
             </button>
             {% empty %}
             <div class="category-empty-card">
-                <div class="category-empty-icon">
-                    <i class="bi bi-grid-3x3-gap"></i>
+                <div class="category-empty-title">支出項目がまだありません</div>
+                <a href="{% url 'kakeibo:category_create' %}" class="category-empty-link">支出項目を追加する</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="category-grid" id="income-category-grid" style="display:none;">
+            {% for category in income_categories %}
+            <button type="button" class="category-btn income-category-btn" data-category-id="{{ category.id }}"
+                data-category-name="{{ category.name }}">
+                <div class="category-btn-inner">
+                    <span class="category-text-only">{{ category.name }}</span>
                 </div>
-                <div class="category-empty-title">項目がまだありません</div>
-                <div class="category-empty-text">
-                    最初に項目を追加すると、ここからすぐ入力できるようになります
-                </div>
-                <a href="{% url 'kakeibo:category_create' %}" class="category-empty-link">
-                    項目を追加する
-                </a>
+            </button>
+            {% empty %}
+            <div class="category-empty-card">
+                <div class="category-empty-title">収入項目がまだありません</div>
+                <a href="{% url 'kakeibo:income_category_create' %}" class="category-empty-link">収入項目を追加する</a>
             </div>
             {% endfor %}
         </div>
     </div>
+</div>
 
-    <div class="save-overlay" id="save-overlay">
-        <div class="save-ring-wrap">
-            <div class="save-aura"></div>
-            <div class="save-ring-outer"></div>
-            <div class="save-ring"></div>
-            <div class="save-ring-inner-cut"></div>
-            <div class="save-check">✓</div>
-        </div>
-        <div class="save-text" id="save-text">入力しました</div>
+<div class="save-overlay" id="save-overlay">
+    <div class="save-ring-wrap">
+        <div class="save-aura"></div>
+        <div class="save-ring-outer"></div>
+        <div class="save-ring"></div>
+        <div class="save-ring-inner-cut"></div>
+        <div class="save-check">✓</div>
     </div>
+    <div class="save-text" id="save-text">入力しました</div>
+</div>
 
-    <nav class="bottom-nav">
-        <a href="{% url 'kakeibo:summary' %}" class="bottom-nav-btn">
-            <i class="bi bi-bar-chart fs-5"></i>
-            <span>記録</span>
-        </a>
-        <a href="{% url 'kakeibo:category_list' %}" class="bottom-nav-btn">
-            <i class="bi bi-gear fs-5"></i>
-            <span>設定</span>
-        </a>
-    </nav>
+<nav class="bottom-nav">
+    <a href="{% url 'kakeibo:summary' %}" class="bottom-nav-btn">
+        <i class="bi bi-bar-chart fs-5"></i>
+        <span>記録</span>
+    </a>
+    <a href="{% url 'kakeibo:category_list' %}" class="bottom-nav-btn">
+        <i class="bi bi-gear fs-5"></i>
+        <span>設定</span>
+    </a>
+</nav>
 </div>
 
 <style>
@@ -292,8 +308,8 @@
     .today-summary-card {
         max-width: 430px;
         border-radius: 24px;
-        padding: 14px 16px 14px;
-        margin-bottom: 12px;
+        padding: 10px 14px 10px;
+        margin-bottom: 8px;
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06));
         border: 1px solid rgba(255, 255, 255, 0.12);
@@ -318,30 +334,22 @@
 
     .today-summary-top {
         position: relative;
-        z-index: 1;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
+        height: 24px;
     }
 
     .today-summary-sub {
-        margin-top: 2px;
+        margin: 0;
         font-size: 0.98rem;
         font-weight: 800;
         color: rgba(255, 255, 255, 0.96);
-        letter-spacing: 0.02em;
+        white-space: nowrap;
     }
 
     .today-chip {
-        flex-shrink: 0;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+        position: absolute;
+        top: 0;
+        right: 0;
+        
     }
 
     .today-chip.is-today {
@@ -355,14 +363,14 @@
     }
 
     .today-summary-main {
-        position: relative;
-        z-index: 1;
-        margin-top: 10px;
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 12px;
-    }
+    position: relative;
+    z-index: 1;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
 
     .today-summary-amount {
         font-size: clamp(1.7rem, 5.6vw, 2.3rem);
@@ -383,7 +391,7 @@
 
     .today-summary-divider {
         height: 1px;
-        margin: 12px 0;
+        margin: 8px 0;
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
     }
 
@@ -393,6 +401,15 @@
         display: flex;
         align-items: center;
         gap: 10px;
+    }
+
+     .today-summary-heading-wrap {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: max-content;
+        text-align: center;
     }
 
     .date-nav-btn {
@@ -472,7 +489,7 @@
     .today-summary-actions {
         position: relative;
         z-index: 1;
-        margin-top: 12px;
+        margin-top: 8px;
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
@@ -1140,6 +1157,88 @@
             padding: 22px 16px;
         }
     }
+
+        .entry-type-toggle {
+    margin-bottom: 12px;
+}
+
+.toggle-track {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 8px 18px rgba(0,0,0,0.15);
+}
+
+/* スライドするノブ */
+/* デフォルト＝支出（青） */
+.toggle-thumb {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #7fd6ff, #3aa0ff);
+    transition: all 0.25s ease;
+}
+
+/* 収入のとき */
+.toggle-track.is-income .toggle-thumb {
+    transform: translateX(100%);
+    background: linear-gradient(180deg, #6dffb0, #2ecc71);
+}
+
+.toggle-thumb:active {
+    transform: scale(0.97);
+}
+
+.toggle-thumb {
+    transition: all 0.25s ease;
+}
+
+/* ボタン */
+.toggle-btn {
+    position: relative;
+    z-index: 2;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    font-weight: 800;
+    height: 40px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.toggle-btn.is-active {
+    color: #fff;
+}
+        .type-toggle-btn.is-active {
+            color: #fff;
+            background: linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.16),
+                0 6px 14px rgba(0, 0, 0, 0.18);
+        }
+
+    #income-category-grid .category-btn-inner {
+        background:
+            linear-gradient(180deg, rgba(52, 199, 89, 0.18), rgba(52, 199, 89, 0.08));
+    }
+
+    .mini-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 2px;
+}
 </style>
 
 <script>
@@ -1154,7 +1253,7 @@
         const entryDateInput = document.getElementById("entry-date-input");
         const entryDateForm = document.getElementById("entry-date-form");
 
-        const summaryAmount = document.getElementById("summary-amount");
+
         const summaryCount = document.getElementById("summary-count");
         const summaryDateText = document.getElementById("summary-date-text");
         const summaryStateChip = document.getElementById("summary-state-chip");
@@ -1169,10 +1268,47 @@
         const calcButtons = document.querySelectorAll(".calc-btn");
         const categoryButtons = document.querySelectorAll(".category-btn");
 
+        const hiddenEntryType = document.getElementById("hidden-entry-type");
+        const typeExpenseBtn = document.getElementById("type-expense-btn");
+        const typeIncomeBtn = document.getElementById("type-income-btn");
+        const expenseCategoryGrid = document.getElementById("expense-category-grid");
+        const incomeCategoryGrid = document.getElementById("income-category-grid");
+
         let currentAmount = "";
         let selectedCategory = "";
         let expression = "";
         let justEvaluated = false;
+
+        function setEntryType(type) {
+    hiddenEntryType.value = type;
+
+    const isExpense = type === "expense";
+
+    typeExpenseBtn.classList.toggle("is-active", isExpense);
+    typeIncomeBtn.classList.toggle("is-active", !isExpense);
+
+    // 👇 これ追加
+    const toggleTrack = document.getElementById("entry-type-toggle").querySelector(".toggle-track");
+    toggleTrack.classList.toggle("is-income", !isExpense);
+
+    if (expenseCategoryGrid) {
+        expenseCategoryGrid.style.display = isExpense ? "grid" : "none";
+    }
+    if (incomeCategoryGrid) {
+        incomeCategoryGrid.style.display = isExpense ? "none" : "grid";
+    }
+
+    hiddenCategory.value = "";
+    selectedCategory = "";
+}
+
+        typeExpenseBtn.addEventListener("click", function () {
+            setEntryType("expense");
+        });
+
+        typeIncomeBtn.addEventListener("click", function () {
+            setEntryType("income");
+        });
 
         function showInlineError(message) {
             if (window.showPremiumToast) {
@@ -1353,11 +1489,21 @@
         calcButtons.forEach(attachPressEffect);
 
         function openDrawer() {
-            const categoryCount = Number(openCategoryBtn.dataset.categoryCount || 0);
-            const createUrl = openCategoryBtn.dataset.categoryCreateUrl;
+            const isExpense = hiddenEntryType.value === "expense";
 
-            if (categoryCount === 0) {
-                window.location.href = createUrl;
+            const expenseCount = Number(openCategoryBtn.dataset.expenseCount || 0);
+            const incomeCount = Number(openCategoryBtn.dataset.incomeCount || 0);
+
+            const expenseCreateUrl = openCategoryBtn.dataset.expenseCreateUrl;
+            const incomeCreateUrl = openCategoryBtn.dataset.incomeCreateUrl;
+
+            if (isExpense && expenseCount === 0) {
+                window.location.href = expenseCreateUrl;
+                return;
+            }
+
+            if (!isExpense && incomeCount === 0) {
+                window.location.href = incomeCreateUrl;
                 return;
             }
 
@@ -1402,13 +1548,11 @@
         }
 
         function updateSummaryCard(data) {
-            if (summaryAmount) {
-                summaryAmount.textContent = formatYen(data.selected_day_total || 0);
-            }
+            const summaryExpenseTotal = document.getElementById("summary-expense-total");
 
-            if (summaryCount) {
-                summaryCount.textContent = `${data.selected_day_count || 0}件`;
-            }
+            if (summaryExpenseTotal) {
+                summaryExpenseTotal.textContent = formatYen(data.expense_total || 0);
+        }
 
             if (summaryDateText && data.selected_date) {
                 const d = new Date(data.selected_date + "T00:00:00");
@@ -1416,7 +1560,7 @@
                 const m = d.getMonth() + 1;
                 const day = d.getDate();
                 summaryDateText.textContent = `${y}年${m}月${day}日`;
-            }
+        }
 
             if (summaryStateChip) {
                 summaryStateChip.textContent = data.is_today_input_date ? "TODAY" : "PAST";
@@ -1424,7 +1568,6 @@
                 summaryStateChip.classList.toggle("is-past", !data.is_today_input_date);
             }
         }
-
         async function saveExpense() {
             const numericAmount = hiddenAmount.value;
 
@@ -1498,7 +1641,7 @@
         document.querySelector('[data-action="delete"]').addEventListener("click", deleteOne);
         document.querySelector('[data-action="equals"]').addEventListener("click", calculateOnly);
 
-        categoryButtons.forEach(btn => {
+        document.querySelectorAll(".category-btn").forEach(btn => {
             btn.addEventListener("click", async function () {
                 selectedCategory = this.dataset.categoryId;
                 hiddenCategory.value = selectedCategory;

@@ -29,6 +29,7 @@
                         {% endif %}
                     </div>
 
+                    {% if not is_income %}
                     <div class="field-block">
                         <label for="{{ form.budget.id_for_label }}" class="field-label">月予算</label>
                         {{ form.budget }}
@@ -37,30 +38,33 @@
                         {% endif %}
                         <div class="field-help">使わない場合は 0 のままでOKです</div>
                     </div>
-
-                    <div class="action-stack">
-                        <button type="submit" class="btn-save-main">
-                            <i class="bi bi-check2-circle"></i>
-                            <span>保存する</span>
-                        </button>
-
-                        {% if is_first_category %}
-                        <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
-                            <i class="bi bi-arrow-left"></i>
-                            <span>入力画面へ戻る</span>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'kakeibo:category_list' %}" class="btn-back-soft">
-                            <i class="bi bi-arrow-left"></i>
-                            <span>設定画面へ戻る</span>
-                        </a>
-                        {% endif %}
-                    </div>
-                </form>
+                    {% endif %}
+                    <div class="field-help">使わない場合は 0 のままでOKです</div>
             </div>
 
+            <div class="action-stack">
+                <button type="submit" class="btn-save-main">
+                    <i class="bi bi-check2-circle"></i>
+                    <span>保存する</span>
+                </button>
+
+                {% if is_first_category %}
+                <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>入力画面へ戻る</span>
+                </a>
+                {% else %}
+                <a href="{% url 'kakeibo:category_list' %}" class="btn-back-soft">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>設定画面へ戻る</span>
+                </a>
+                {% endif %}
+            </div>
+            </form>
         </div>
+
     </div>
+</div>
 </div>
 {% endblock %}
 
