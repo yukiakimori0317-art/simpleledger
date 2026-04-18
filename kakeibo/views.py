@@ -482,7 +482,7 @@ def history(request):
 @login_required
 def month_history(request):
     today = timezone
-    .localdate()
+    timezone.localdate()
 
     #年月決める()URLから取得
     year_str = request.GET.get("year")
