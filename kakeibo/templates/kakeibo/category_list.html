@@ -22,7 +22,7 @@
             </div>
 
             <div class="glass-card hero-card">
-                <div class="hero-title">よく使う項目を整理できます</div>
+                <div class="hero-title">よく使う項目を登録します</div>
                 <div class="hero-text">
                     支出項目は予算つき、収入項目は名前だけで管理します。
                     入力画面では「支出 / 収入」を切り替えて使います。
@@ -308,12 +308,12 @@
     }
 
     .hero-actions {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
 
     .btn-add-main {
         display: inline-flex;
@@ -577,10 +577,22 @@
 }
 
 .btn-action {
-    min-height: 30px;
-    padding: 0 9px;
-    border-radius: 10px;
-    font-size: 0.74rem;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 16px rgba(0, 0, 0, 0.18);
+    transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
     .category-meta {
@@ -623,10 +635,11 @@
     }
 
     .category-actions {
-        display: flex;
-        gap: 6px;
-        flex-shrink: 0;
-    }
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    align-items: center;
+}
 
     .mini-edit-btn,
     .mini-delete-btn {
@@ -865,6 +878,35 @@
 /* 収入だけちょっと色変える */
 .income-heading .section-kicker {
     color: rgba(120, 230, 170, 0.75);
+}
+
+.hero-actions .btn-add-main,
+.hero-actions .btn-back-soft {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero-actions .btn-add-main span,
+.hero-actions .btn-back-soft span {
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
+.btn-edit,
+.btn-edit-income {
+    background:
+        linear-gradient(180deg, rgba(114, 198, 241, 0.95), rgba(47, 126, 167, 0.95));
+    color: #ffffff;
+}
+
+.btn-delete,
+.btn-delete-income {
+    background:
+        linear-gradient(180deg, rgba(255, 107, 107, 0.95), rgba(204, 61, 61, 0.95));
+    color: #ffffff;
 }
     
 </style>

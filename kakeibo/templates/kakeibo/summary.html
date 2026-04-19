@@ -86,8 +86,11 @@
                 <section class="section-card glass-card">
                     <div class="section-head">
                         <div>
-                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別の支出</div>
-                            <div class="section-subtitle">支出ごとの件数と合計金額</div>
+                            <div class="section-title section-title-with-icon">
+    <i class="bi bi-wallet2 title-icon expense-title-icon"></i>
+    <span>{{ selected_year }}年{{ selected_month }}月のカテゴリ別の支出</span>
+</div>
+                            
                         </div>
                     </div>
 
@@ -112,15 +115,20 @@
             </div>
 
             <div class="category-total-right">
-                <div class="category-total-amount">{{ item.total|intcomma }}円</div>
-                <div class="category-total-count">
-                    {% if item.has_budget %}
-                    予算 {{ item.budget|intcomma }}円
-                    {% else %}
-                    予算なし
-                    {% endif %}
-                </div>
-            </div>
+    <div class="category-total-amount">{{ item.total|intcomma }}円</div>
+    <div class="category-total-count-row">
+        <div class="category-total-count-small">
+            {{ item.count }}件
+        </div>
+        <div class="category-total-count">
+            {% if item.has_budget %}
+            予算 {{ item.budget|intcomma }}円
+            {% else %}
+            予算なし
+            {% endif %}
+        </div>
+    </div>
+</div>
         </div>
     </div>
     {% endfor %}
@@ -135,8 +143,11 @@
                 <section class="section-card glass-card">
                     <div class="section-head">
                         <div>
-                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月のカテゴリ別の収入</div>
-                            <div class="section-subtitle">収入ごとの件数と合計金額</div>
+                            <div class="section-title section-title-with-icon">
+    <i class="bi bi-cash-stack title-icon income-title-icon"></i>
+    <span>{{ selected_year }}年{{ selected_month }}月のカテゴリ別の収入</span>
+</div>
+                            
                         </div>
                     </div>
 
@@ -169,8 +180,11 @@
                 <section class="section-card glass-card">
                     <div class="section-head">
                         <div>
-                            <div class="section-title">{{ selected_year }}年{{ selected_month }}月の日ごと履歴</div>
-                            <div class="section-subtitle">支出と収入をまとめて表示します</div>
+                            <div class="section-title section-title-with-icon">
+    <i class="bi bi-calendar3 title-icon daily-title-icon"></i>
+    <span>{{ selected_year }}年{{ selected_month }}月の記録一覧</span>
+</div>
+<div class="section-subtitle">その日の収支をまとめて見られます</div>
                         </div>
                     </div>
 
@@ -363,20 +377,22 @@
     }
 
     .inline-select {
-        flex: 1;
-        height: 42px;
-        border-radius: 14px;
-        text-align: center;
-        font-weight: 700;
-        font-size: 0.95rem;
-        background: rgba(255, 255, 255, 0.10);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #fff;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        appearance: none;
-        -webkit-appearance: none;
-    }
+    flex: 1;
+    height: 42px;
+    border-radius: 14px;
+    text-align: center;
+    text-align-last: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0 28px 0 28px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    appearance: none;
+    -webkit-appearance: none;
+}
 
     .inline-select:focus {
         outline: none;
@@ -972,6 +988,43 @@
     box-shadow:
         inset 0 1px 2px rgba(255, 255, 255, 0.3),
         0 0 8px rgba(255, 69, 58, 0.35);
+}
+
+.section-title-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.title-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.expense-title-icon {
+    color: #ff9f98;
+}
+
+.income-title-icon {
+    color: #86efac;
+}
+
+.daily-title-icon {
+    color: #7dd3fc;
+}
+
+.category-total-count-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.category-total-count-small {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.50);
+    line-height: 1;
+    white-space: nowrap;
 }
 </style>
 {% endblock %}
