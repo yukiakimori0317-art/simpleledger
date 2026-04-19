@@ -23,19 +23,19 @@
             <div class="glass-card hero-card">
                 <div class="hero-title">よく使う項目を登録します</div>
                 <div class="hero-text">
-                    支出項目は予算つき、収入項目は名前だけで管理します。
-                    入力画面では「支出 / 収入」を切り替えて使います。
+                    支出は予算を設定できます。
+                    入力画面では[支出]と[収入]を切り替えて使います。
                 </div>
 
                 <div class="hero-actions">
                     <a href="{% url 'kakeibo:category_create' %}" class="btn-add-main">
                         <i class="bi bi-plus-lg"></i>
-                        <span>支出カテゴリ追加</span>
+                        <span>支出を登録</span>
                     </a>
 
                     <a href="{% url 'kakeibo:income_category_create' %}" class="btn-add-main btn-add-income">
                         <i class="bi bi-plus-lg"></i>
-                        <span>収入カテゴリ追加</span>
+                        <span>収入を登録</span>
                     </a>
 
                     <a href="{% url 'kakeibo:index' %}" class="btn-back-soft">
@@ -84,7 +84,7 @@
 
                     <div class="category-bottom-row">
                         <div class="category-meta compact-meta">
-                            <div class="meta-chip">月予算 {{ category.budget|default:0 }}円</div>
+                            <div class="meta-chip">予算 {{ category.budget|default:0 }}円</div>
                             <div class="meta-chip">{{ category.expense_count }}件</div>
                         </div>
 
