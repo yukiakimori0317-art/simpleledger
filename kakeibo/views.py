@@ -17,9 +17,11 @@ from .forms import (
     ExpenseEditForm,
     IncomeCategoryForm,
     IncomeEditForm,
+    ProfileNicknameForm,
     SignUpForm,
 )
 from .models import AppSetting, Category, Expense, Income, IncomeCategory
+from .models import Profile
 
 
 from django.http import HttpResponse
@@ -298,32 +300,52 @@ def ajax_add_entry(request):
 @login_required
 def category_list(request):
     setting = get_app_setting()
+    profile, _ = Profile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        cycle_form = AppSettingForm(request.POST, instance=setting)
-        if cycle_form.is_valid():
-            cycle_form.save()
-            flash_updated(request, "集計開始日を更新しました")
-            return redirect("kakeibo:category_list")
+        form_type = request.POST.get("form_type")
+
+        if form_type == "cycle":
+            cycle_form = AppSettingForm(request.POST, instance=setting)
+            nickname_form = ProfileNicknameForm(instance=profile)
+
+            if cycle_form.is_valid():
+                cycle_form.save()
+                messages.success(request, "集計開始日を更新しました")
+                return redirect("kakeibo:category_list")
+
+        elif form_type == "nickname":
+            cycle_form = AppSettingForm(instance=setting)
+            nickname_form = ProfileNicknameForm(request.POST, instance=profile)
+
+            if nickname_form.is_valid():
+                nickname_form.save()
+                messages.success(request, "ニックネームを更新しました")
+                return redirect("kakeibo:category_list")
+
+        else:
+            cycle_form = AppSettingForm(instance=setting)
+            nickname_form = ProfileNicknameForm(instance=profile)
+
     else:
         cycle_form = AppSettingForm(instance=setting)
+        nickname_form = ProfileNicknameForm(instance=profile)
 
-    categories = Category.objects.filter(owner=request.user).annotate(
+    expense_categories = Category.objects.filter(owner=request.user).annotate(
         expense_count=Count("expenses")
-    ).order_by("-expense_count", "name", "id")
+    ).order_by("name")
 
     income_categories = IncomeCategory.objects.filter(owner=request.user).annotate(
         income_count=Count("incomes")
-    ).order_by("-income_count", "name", "id")
+    ).order_by("name")
 
-    return render(request, "kakeibo/category_list.html", {
-        "categories": categories,
-        "income_categories": income_categories,
-        "category_count": categories.count(),
-        "income_category_count": income_categories.count(),
+    context = {
         "cycle_form": cycle_form,
-        "cycle_start_day": setting.cycle_start_day,
-    })
+        "nickname_form": nickname_form,
+        "expense_categories": expense_categories,
+        "income_categories": income_categories,
+    }
+    return render(request, "kakeibo/category_list.html", context)
 
 
 #カテゴリを新規作成する画面＋保存処理
@@ -930,7 +952,7 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            flash_created(request, "登録が完了しました")
+            messages.success(request, "アカウントを作成しました")
             return redirect("kakeibo:index")
     else:
         form = SignUpForm()

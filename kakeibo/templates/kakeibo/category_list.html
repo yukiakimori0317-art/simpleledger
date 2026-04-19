@@ -22,7 +22,6 @@
 
             <div class="glass-card hero-card">
                 <div class="hero-title">よく使う項目を登録します</div>
-          
 
                 <div class="hero-actions">
                     <a href="{% url 'kakeibo:category_create' %}" class="btn-add-main">
@@ -43,10 +42,39 @@
             </div>
 
             <div class="glass-card section-card">
+                <div class="section-title">表示名</div>
+                <div class="cycle-form-wrap">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="nickname">
+
+                        <div class="nickname-inline-row">
+                            <div class="nickname-input-wrap">
+                                {{ nickname_form.nickname }}
+                            </div>
+                            <button type="submit" class="btn-save-cycle">保存する</button>
+                        </div>
+
+                        {% if nickname_form.nickname.errors %}
+                        <div class="field-note field-note-error">
+                            {{ nickname_form.nickname.errors|striptags }}
+                        </div>
+                        {% endif %}
+
+                        <div class="field-note">
+                            上部ヘッダーに表示する名前です。
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="glass-card section-card">
                 <div class="section-title">集計サイクル</div>
                 <div class="cycle-form-wrap">
                     <form method="post">
                         {% csrf_token %}
+                        <input type="hidden" name="form_type" value="cycle">
+
                         <div class="cycle-inline-row">
                             <div class="cycle-input-wrap">
                                 {{ cycle_form.cycle_start_day }}
@@ -411,7 +439,8 @@
         font-weight: 700;
     }
 
-    .cycle-inline-row {
+    .cycle-inline-row,
+    .nickname-inline-row {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -421,6 +450,11 @@
     .cycle-input-wrap {
         width: 92px;
         flex-shrink: 0;
+    }
+
+    .nickname-input-wrap {
+        flex: 1;
+        min-width: 0;
     }
 
     .cycle-day-label {
@@ -768,7 +802,8 @@
             padding: 0 10px;
         }
 
-        .cycle-inline-row {
+        .cycle-inline-row,
+        .nickname-inline-row {
             gap: 6px;
         }
 

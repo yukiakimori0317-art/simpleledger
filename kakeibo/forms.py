@@ -8,6 +8,7 @@ from .models import (
     Expense,
     Income,
     IncomeCategory,
+    Profile,
 )
 
 
@@ -26,7 +27,6 @@ class ExpenseForm(forms.ModelForm):
             self.fields["category"].queryset = Category.objects.filter(
                 owner=user
             ).order_by("name")
-        #ユーザーがないなら、何もしない
         else:
             self.fields["category"].queryset = Category.objects.none()
 
@@ -114,8 +114,38 @@ class AppSettingForm(forms.ModelForm):
             }),
         }
 
+class ProfileNicknameForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["nickname"]
+        widgets = {
+            "nickname": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "表示したい名前",
+                "maxlength": "30",
+            }),
+        }
+
+    def clean_nickname(self):
+        nickname = self.cleaned_data.get("nickname", "").strip()
+
+        if not nickname:
+            raise forms.ValidationError("ニックネームを入力してください。")
+
+        return nickname
+
 
 class SignUpForm(UserCreationForm):
+    nickname = forms.CharField(
+        label="ニックネーム",
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "表示したい名前",
+        }),
+    )
+
     username = forms.CharField(
         label="ユーザー名",
         max_length=150,
@@ -125,6 +155,7 @@ class SignUpForm(UserCreationForm):
             "autocomplete": "username",
         }),
     )
+
     password1 = forms.CharField(
         label="パスワード",
         widget=forms.PasswordInput(attrs={
@@ -133,6 +164,7 @@ class SignUpForm(UserCreationForm):
             "autocomplete": "new-password",
         }),
     )
+
     password2 = forms.CharField(
         label="パスワード（確認）",
         widget=forms.PasswordInput(attrs={
@@ -144,7 +176,7 @@ class SignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "password1", "password2"]
+        fields = ["username", "nickname", "password1", "password2"]
 
     def clean_username(self):
         username = self.cleaned_data.get("username", "").strip()
@@ -156,3 +188,22 @@ class SignUpForm(UserCreationForm):
             raise forms.ValidationError("このユーザー名は既に使われています。")
 
         return username
+
+    def clean_nickname(self):
+        nickname = self.cleaned_data.get("nickname", "").strip()
+
+        if not nickname:
+            raise forms.ValidationError("ニックネームを入力してください。")
+
+        return nickname
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+
+        nickname = self.cleaned_data.get("nickname", "").strip()
+
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.nickname = nickname
+        profile.save()
+
+        return user

@@ -88,3 +88,17 @@ class Income(models.Model):
 
     def __str__(self):
         return f"{self.date} {self.category.name} {self.amount}円"
+
+
+# プロフィール
+class Profile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name="ユーザー",
+    )
+    nickname = models.CharField("ニックネーム", max_length=30, blank=True)
+
+    def __str__(self):
+        return self.nickname or self.user.username
