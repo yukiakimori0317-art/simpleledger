@@ -331,7 +331,7 @@ def category_list(request):
         cycle_form = AppSettingForm(instance=setting)
         nickname_form = ProfileNicknameForm(instance=profile)
 
-    expense_categories = Category.objects.filter(owner=request.user).annotate(
+    categories = Category.objects.filter(owner=request.user).annotate(
         expense_count=Count("expenses")
     ).order_by("name")
 
@@ -342,8 +342,11 @@ def category_list(request):
     context = {
         "cycle_form": cycle_form,
         "nickname_form": nickname_form,
-        "expense_categories": expense_categories,
+        "categories": categories,
         "income_categories": income_categories,
+        "category_count": categories.count(),
+        "income_category_count": income_categories.count(),
+        "cycle_start_day": setting.cycle_start_day,
     }
     return render(request, "kakeibo/category_list.html", context)
 
