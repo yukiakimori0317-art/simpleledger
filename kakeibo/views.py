@@ -229,6 +229,7 @@ def ajax_add_entry(request):
     category_id = request.POST.get("category")
     entry_date = parse_entry_date(request.POST.get("entry_date"))
     entry_type = request.POST.get("entry_type", "expense")
+    force_save = request.POST.get("force_save") == "1"
 
     if not amount:
         return JsonResponse({"success": False, "error": "金額を入力してください"}, status=400)
@@ -246,6 +247,22 @@ def ajax_add_entry(request):
 
     if entry_type == "income":
         category = get_object_or_404(IncomeCategory, pk=category_id, owner=request.user)
+
+        if not force_save:
+            duplicate_exists = Income.objects.filter(
+                owner=request.user,
+                category=category,
+                amount=amount_int,
+                date=entry_date,
+            ).exists()
+
+            if duplicate_exists:
+                return JsonResponse({
+                    "success": False,
+                    "duplicate": True,
+                    "message": "同じ日に同じ金額・同じ項目の収入があります",
+                })
+
         income = Income.objects.create(
             owner=request.user,
             category=category,
@@ -255,8 +272,25 @@ def ajax_add_entry(request):
         saved_name = category.name
         saved_id = income.id
         toast_message = "収入を追加しました"
+
     else:
         category = get_object_or_404(Category, pk=category_id, owner=request.user)
+
+        if not force_save:
+            duplicate_exists = Expense.objects.filter(
+                owner=request.user,
+                category=category,
+                amount=amount_int,
+                date=entry_date,
+            ).exists()
+
+            if duplicate_exists:
+                return JsonResponse({
+                    "success": False,
+                    "duplicate": True,
+                    "message": "同じ日に同じ金額・同じ項目の支出があります",
+                })
+
         expense = Expense.objects.create(
             owner=request.user,
             category=category,

@@ -1631,60 +1631,84 @@
             }
         }
 
-        async function saveExpense() {
-            const numericAmount = hiddenAmount.value;
+        async function saveExpense(forceSave = false) {
+    const numericAmount = hiddenAmount.value;
 
-            if (!numericAmount || Number(numericAmount) <= 0) {
-                showInlineError("金額を入力してください");
-                return;
+    if (!numericAmount || Number(numericAmount) <= 0) {
+        showInlineError("金額を入力してください");
+        return;
+    }
+
+    if (!hiddenCategory.value) {
+        showInlineError("項目を選択してください");
+        return;
+    }
+
+    if (!hiddenEntryDate.value) {
+        showInlineError("日付が正しくありません");
+        return;
+    }
+
+    const formData = new FormData(expenseForm);
+
+    if (forceSave) {
+        formData.append("force_save", "1");
+    }
+
+    try {
+        const res = await fetch(expenseForm.action, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
             }
+        });
 
-            if (!hiddenCategory.value) {
-                showInlineError("項目を選択してください");
-                return;
-            }
+        const data = await res.json().catch(() => null);
 
-            if (!hiddenEntryDate.value) {
-                showInlineError("日付が正しくありません");
-                return;
-            }
-
-            const formData = new FormData(expenseForm);
-
-            try {
-                const res = await fetch(expenseForm.action, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-
-                const data = await res.json().catch(() => null);
-
-                if (!res.ok || !data) {
-                    showInlineError("保存に失敗しました");
-                    return;
-                }
-
-                if (data.success) {
-                    updateSummaryCard(data);
-                    triggerSaveCelebration();
-
-                    currentAmount = "";
-                    expression = "";
-                    justEvaluated = false;
-                    hiddenCategory.value = "";
-                    selectedCategory = "";
-                    updateDisplay();
-                } else {
-                    showInlineError(data.error || "保存に失敗しました");
-                }
-            } catch (e) {
-                console.error("save error:", e);
-                showInlineError("通信エラーです");
-            }
+        if (!data) {
+            showInlineError("保存に失敗しました");
+            return;
         }
+
+        if (data.duplicate) {
+            const ok = confirm(
+                "同じ日に同じ金額・同じ項目の入力があります。\n\n" +
+                "重複していないか確認してください。\n\n" +
+                "このまま保存しますか？"
+            );
+
+            if (!ok) {
+                return;
+            }
+
+            await saveExpense(true);
+            return;
+        }
+
+        if (!res.ok) {
+            showInlineError(data.error || "保存に失敗しました");
+            return;
+        }
+
+        if (data.success) {
+            updateSummaryCard(data);
+            triggerSaveCelebration();
+
+            currentAmount = "";
+            expression = "";
+            justEvaluated = false;
+            hiddenCategory.value = "";
+            selectedCategory = "";
+            updateDisplay();
+        } else {
+            showInlineError(data.error || "保存に失敗しました");
+        }
+    } catch (e) {
+        console.error("save error:", e);
+        showInlineError("通信エラーです");
+    }
+}
 
         document.querySelectorAll(".calc-number").forEach(btn => {
             btn.addEventListener("click", function () {
