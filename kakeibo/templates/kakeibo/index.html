@@ -11,6 +11,7 @@
             <div class="calc-top-glow"></div>
 
             <div class="calc-inner">
+           
                 <div class="entry-type-toggle" id="entry-type-toggle">
                     <div class="toggle-track">
                         <div class="toggle-thumb" id="toggle-thumb"></div>
@@ -25,9 +26,21 @@
                 </div>
 
                 <div class="display-panel">
-                    <div class="amount-display" id="amount-display">0円</div>
-                    <div class="formula-display" id="formula-display">&nbsp;</div>
-                </div>
+    <div class="display-date-chip">
+        {{ target_date|date:"n/j" }}
+        {% if target_date|date:"w" == "0" %}(SUN)
+        {% elif target_date|date:"w" == "1" %}(MON)
+        {% elif target_date|date:"w" == "2" %}(TUE)
+        {% elif target_date|date:"w" == "3" %}(WED)
+        {% elif target_date|date:"w" == "4" %}(THU)
+        {% elif target_date|date:"w" == "5" %}(FRI)
+        {% elif target_date|date:"w" == "6" %}(SAT)
+        {% endif %}
+    </div>
+
+    <div class="amount-display" id="amount-display">0円</div>
+    <div class="formula-display" id="formula-display">&nbsp;</div>
+</div>
 
                 <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_entry' %}">
                     {% csrf_token %}
@@ -93,8 +106,13 @@
                 <div class="today-summary-divider"></div>
 
                 <div class="today-summary-bottom">
-                    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
-                        aria-label="前日">
+    <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        <span>今日に戻す</span>
+    </a>
+
+    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
+        aria-label="前日">
                         <i class="bi bi-chevron-left"></i>
                     </a>
 
@@ -116,12 +134,7 @@
                 </div>
 
                 <div class="today-summary-actions">
-                    {% if not is_today_input_date %}
-                    <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>今日に戻す</span>
-                    </a>
-                    {% endif %}
+                   
 
                     <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
                        class="mini-action-btn mini-action-history">
@@ -1202,6 +1215,21 @@
         color: rgba(255,255,255,0.5);
         margin-bottom: 2px;
     }
+
+    .display-date-chip {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 2;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.66);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
     @media (max-width: 420px) {
         .page-logo {

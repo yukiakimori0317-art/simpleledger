@@ -67,50 +67,52 @@
                             {% endif %}
                         </div>
 
-                        <div class="history-time">
-                            <i class="bi bi-clock"></i>
-                            {{ entry.created_at|date:"H:i" }}
-                        </div>
+                        
                     </div>
 
                     <div class="history-main">
-                        <div class="history-category">{{ entry.category_name }}</div>
+    <div class="history-row">
 
-                        <div class="history-bottom-row">
-                            <div class="history-amount {% if entry.kind == 'income' %}income-amount{% else %}expense-amount{% endif %}">
-                                {% if entry.kind == 'income' %}+{% else %}-{% endif %}
-                                {{ entry.amount|intcomma }}円
-                            </div>
+        <div class="history-category">
+            {{ entry.category_name }}
+        </div>
 
-                            <div class="history-actions-inline">
-                                {% if entry.kind == "income" %}
-                                <a href="{% url 'kakeibo:income_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
-                                   class="icon-btn edit-btn"
-                                   aria-label="収入を編集">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
-                                <a href="{% url 'kakeibo:income_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
-                                   class="icon-btn delete-btn"
-                                   aria-label="収入を削除">
-                                    <i class="bi bi-trash3"></i>
-                                </a>
-                                {% else %}
-                                <a href="{% url 'kakeibo:expense_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
-                                   class="icon-btn edit-btn"
-                                   aria-label="支出を編集">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
-                                <a href="{% url 'kakeibo:expense_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
-                                   class="icon-btn delete-btn"
-                                   aria-label="支出を削除">
-                                    <i class="bi bi-trash3"></i>
-                                </a>
-                                {% endif %}
-                            </div>
+        <div class="history-time-inline">
+                            <i class="bi bi-clock"></i>
+                            {{ entry.created_at|date:"H:i" }}
                         </div>
-                    </div>
+
+        <div class="history-amount {% if entry.kind == 'income' %}income-amount{% else %}expense-amount{% endif %}">
+            {% if entry.kind == 'income' %}+{% else %}-{% endif %}
+            {{ entry.amount|intcomma }}円
+        </div>
+
+        <div class="history-actions-inline">
+            {% if entry.kind == "income" %}
+            <a href="{% url 'kakeibo:income_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
+               class="icon-btn edit-btn">
+                <i class="bi bi-pencil"></i>
+            </a>
+
+            <a href="{% url 'kakeibo:income_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
+               class="icon-btn delete-btn">
+                <i class="bi bi-trash3"></i>
+            </a>
+            {% else %}
+            <a href="{% url 'kakeibo:expense_edit' entry.pk %}?return_to=day&date={{ selected_date }}"
+               class="icon-btn edit-btn">
+                <i class="bi bi-pencil"></i>
+            </a>
+
+            <a href="{% url 'kakeibo:expense_delete' entry.pk %}?return_to=day&date={{ selected_date }}"
+               class="icon-btn delete-btn">
+                <i class="bi bi-trash3"></i>
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
                 </div>
                 {% endfor %}
             </div>
@@ -293,7 +295,7 @@
 
     .history-item {
         border-radius: 22px;
-        padding: 14px 14px 14px;
+        padding: 10px 14px;
         background: rgba(255,255,255,0.055);
         border: 1px solid rgba(255,255,255,0.10);
         backdrop-filter: blur(16px);
@@ -306,7 +308,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
     }
 
     .history-chip-wrap {
@@ -355,12 +357,18 @@
         gap: 8px;
     }
 
+    .history-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
     .history-category {
-        font-size: 1rem;
-        font-weight: 800;
-        line-height: 1.4;
-        word-break: break-word;
-    }
+    flex: 0 0 80px;
+    font-size: 1rem;
+    font-weight: 800;
+}
 
     .history-bottom-row {
         display: flex;
@@ -370,7 +378,7 @@
     }
 
     .history-amount {
-        font-size: 1.28rem;
+        font-size: 1.15rem;
         font-weight: 900;
         line-height: 1.2;
         letter-spacing: 0.01em;
@@ -466,6 +474,12 @@
     .back-btn:active {
         transform: scale(0.98);
     }
+
+    .history-time-inline {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+}
 
     @media (max-width: 420px) {
         .container {
