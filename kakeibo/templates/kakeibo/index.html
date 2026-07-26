@@ -302,18 +302,24 @@
     }
 
     .calc-inner {
-        position: relative;
-        border-radius: 30px;
-        padding: 18px 14px;
-        background:linear-gradient(180deg, rgba(32, 38, 48, 0.94), rgba(18, 22, 30, 0.96));
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
-        overflow: hidden;
-        min-height: 600px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
+    position: relative;
+    border-radius: 30px;
+    padding: 18px 14px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(32, 38, 48, 0.94),
+            rgba(18, 22, 30, 0.96)
+        );
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    overflow: hidden;
+    min-height: 600px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
 
     .calc-inner::before {
         content: "";
@@ -559,19 +565,28 @@
     }
 
     .display-panel {
-        position: relative;
-        overflow: hidden;
-        border-radius: 22px;
-        padding: 14px 14px 12px;
-        margin-bottom: 14px;
-        background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.12),
-            inset 0 -16px 22px rgba(0, 0, 0, 0.16),
-            0 10px 26px rgba(0, 0, 0, 0.22);
-    }
+    position: relative;
+    overflow: hidden;
+    flex: 0 0 auto;
+
+    border-radius: 22px;
+    padding: 14px 14px 12px;
+    margin-bottom: 14px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.05)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -16px 22px rgba(0, 0, 0, 0.16),
+        0 10px 26px rgba(0, 0, 0, 0.22);
+}
 
     
 
@@ -727,8 +742,11 @@
 
     .calculator-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 11px;
+
+    flex: 1;
+    align-content: stretch;
     margin-bottom: 0;
 }
 
@@ -1405,10 +1423,7 @@
     margin-top: 6px;
 }
 
-.amount-display {
-    min-height: 58px;
-    font-size: clamp(2.2rem, 8vw, 3rem);
-}
+
 
 .formula-display {
     min-height: 14px;
@@ -1469,33 +1484,61 @@
             padding: 22px 16px;
         }
 
-        .amount-display {
-            min-height: 74px;
-            font-size: clamp(2.2rem, 8vw, 3rem);
-        }
+        
     }
-    /* ホーム画面から起動したPWAだけに適用 */
+/* ホーム画面から起動したPWAだけに適用 */
 @media (display-mode: standalone) and (max-width: 420px) {
+
     .bottom-nav {
-        bottom: calc(12px + env(safe-area-inset-bottom));
+        bottom: calc(8px + env(safe-area-inset-bottom));
     }
 
     .calc-shell {
-        height: calc(
-            100dvh
-            - 170px
-            - env(safe-area-inset-bottom)
-        );
+        height: auto;
+        margin-top: 6px;
     }
 
     .calc-inner {
-        height: 100%;
+        height: auto;
         min-height: 0;
-        padding-bottom: 12px;
+        padding: 10px 14px 12px;
+        justify-content: flex-start;
+    }
+
+    .entry-type-toggle {
+        flex-shrink: 0;
+        margin-bottom: 6px;
+    }
+
+    .display-panel {
+        flex-shrink: 0;
+        margin-bottom: 7px;
+        padding: 8px 12px 6px;
+    }
+
+    .display-value-area {
+        margin-top: 4px;
+    }
+
+    .amount-display {
+        min-height: 48px;
+        font-size: clamp(2rem, 7.5vw, 2.8rem);
+    }
+
+    .formula-display {
+        min-height: 10px;
+        margin-top: 0;
     }
 
     .calculator-grid {
+        flex-shrink: 0;
+        gap: 7px 10px;
         margin-bottom: 0;
+    }
+
+    .calc-btn {
+        height: 52px;
+        border-radius: 20px;
     }
 }
 </style>
