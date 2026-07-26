@@ -1,0 +1,48 @@
+[33maea493e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Refine calculator layout and mobile UI3
+[33m1e99275[m Refine calculator layout and mobile UI2
+[33m4c25e59[m Refine calculator layout and mobile UI
+[33mc296bbb[m スクロールをロック
+[33m39dcf5d[m Improve index layout and fixed calculator screen
+[33mb7b8314[m index画面と設定画面のUI改善
+[33m8682868[m 重複入力チェック機能追加
+[33m6718805[m[33m ([m[1;33mtag: [m[1;33mv1.0-dailylog-ui[m[33m)[m indexと履歴画面UI改善
+[33me712ad3[m category_list修正
+[33m547d4ad[m ニックネーム
+[33me565d91[m 微調整
+[33m74a7681[m 電卓上に
+[33m0350eef[m 設定横並び
+[33mb6f2a56[m 表示の変更
+[33m5aae0f2[m fix views.py syntax error
+[33ma1825bf[m fix remaining conflict markers
+[33mce54afb[m conflict解消
+[33mc3fa7cd[m 全体微調整
+[33m7d30ea2[m Add README
+[33mf895421[m 電卓数字調整
+[33m496bb18[m 今月カウント修正
+[33m8340518[m レイアウト修正
+[33mce6c626[m summary修正
+[33m63c149a[m index見た目修正
+[33md6538a4[m index見た目修正
+[33m498ecd9[m ドロワー再修正
+[33me56726a[m ドロワー修正
+[33m57c2ede[m remove icon completely
+[33m89b2993[m remove icon completely
+[33ma4fa95b[m remove icon field migration
+[33m4ee3ab9[m fix syntax error
+[33m22c1fd5[m コメント修正
+[33m93ff236[m fix syntax error
+[33m9ad2618[m コードコメント
+[33m814a546[m 画像やめる
+[33m54d75f6[m 修正内容
+[33m6a66e89[m 修正内容
+[33m25c928f[m index修正
+[33mb817d02[m 修正
+[33m9e05edb[m 日付ボタンの修正
+[33m3e3f41d[m home edit
+[33mbe31d8f[m fix static settings for render
+[33m0ed4a0c[m fix static for render
+[33m1e25fa2[m fix static files
+[33m41dbdb2[m add pwa icons
+[33mb0b070f[m fix logout url syntax
+[33m9cd67b4[m add iphone style logout topbar
+[33m051e841[m rebuild git
