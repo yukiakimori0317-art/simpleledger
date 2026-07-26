@@ -304,7 +304,7 @@
     .calc-inner {
         position: relative;
         border-radius: 30px;
-        padding: 18px 14px 96px;
+        padding: 18px 14px;
         background:linear-gradient(180deg, rgba(32, 38, 48, 0.94), rgba(18, 22, 30, 0.96));
         backdrop-filter: blur(22px);
         -webkit-backdrop-filter: blur(22px);
@@ -729,7 +729,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 11px;
-    margin-bottom: 82px;
+    margin-bottom: 0;
 }
 
     .calc-btn {
@@ -1380,19 +1380,50 @@
         }
 
         .calc-shell {
-            margin-top: 10px;
-        }
+    margin-top: 8px;
+    height: calc(100dvh - 154px);
+}
 
-        .calc-inner {
-            padding: 16px 14px 18px;
-            min-height: 560px;
-        }
+.calc-inner {
+    height: 100%;
+    min-height: 0;
+    padding: 12px 14px;
+    justify-content: space-between;
+}
 
-        .calc-btn {
-            height: 68px;
-            font-size: 1.35rem;
-            border-radius: 22px;
-        }
+.entry-type-toggle {
+    margin-bottom: 8px;
+}
+
+.display-panel {
+    margin-bottom: 8px;
+    padding-top: 10px;
+    padding-bottom: 8px;
+}
+
+.display-value-area {
+    margin-top: 6px;
+}
+
+.amount-display {
+    min-height: 58px;
+    font-size: clamp(2.2rem, 8vw, 3rem);
+}
+
+.formula-display {
+    min-height: 14px;
+}
+
+.calculator-grid {
+    gap: clamp(7px, 1.1vh, 11px);
+    margin-bottom: 0;
+}
+
+.calc-btn {
+    height: clamp(51px, 7vh, 68px);
+    font-size: 1.35rem;
+    border-radius: 22px;
+}
 
         .calc-item,
         .calc-util {
