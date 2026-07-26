@@ -25,21 +25,61 @@
                     </div>
                 </div>
 
-                <div class="display-panel">
-    <div class="display-date-chip">
-        {{ target_date|date:"n/j" }}
-        {% if target_date|date:"w" == "0" %}(SUN)
-        {% elif target_date|date:"w" == "1" %}(MON)
-        {% elif target_date|date:"w" == "2" %}(TUE)
-        {% elif target_date|date:"w" == "3" %}(WED)
-        {% elif target_date|date:"w" == "4" %}(THU)
-        {% elif target_date|date:"w" == "5" %}(FRI)
-        {% elif target_date|date:"w" == "6" %}(SAT)
-        {% endif %}
+<div class="display-panel">
+
+    <div class="display-main-row">
+
+        <div class="display-date-area">
+
+            <div class="display-date-nav">
+
+                <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}"
+                   class="display-date-nav-btn"
+                   aria-label="前日">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+
+                <form method="get" class="display-date-form" id="entry-date-form">
+                    <input type="date"
+                           name="date"
+                           id="entry-date-input"
+                           class="display-date-input"
+                           value="{{ target_date|date:'Y-m-d' }}"
+                           max="{{ today|date:'Y-m-d' }}">
+                </form>
+
+                {% if can_go_next %}
+                <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}"
+                   class="display-date-nav-btn"
+                   aria-label="翌日">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                {% else %}
+                <button type="button"
+                        class="display-date-nav-btn is-disabled"
+                        aria-label="翌日"
+                        disabled>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                {% endif %}
+
+            </div>
+
+            <a href="{% url 'kakeibo:index' %}"
+               class="display-today-btn">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>今日に戻す</span>
+            </a>
+
+        </div>
+
+        <div class="display-value-area">
+            <div class="amount-display" id="amount-display">0円</div>
+            <div class="formula-display" id="formula-display">&nbsp;</div>
+        </div>
+
     </div>
 
-    <div class="amount-display" id="amount-display">0円</div>
-    <div class="formula-display" id="formula-display">&nbsp;</div>
 </div>
 
                 <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_entry' %}">
@@ -85,67 +125,7 @@
                 </div>
             </div>
 
-            <div class="today-summary-card summary-reveal mx-auto">
-                <div class="today-summary-top">
-                    <div class="today-chip {% if is_today_input_date %}is-today{% else %}is-past{% endif %}"
-                        id="summary-state-chip">
-                        {% if is_today_input_date %}
-                        TODAY
-                        {% else %}
-                        PAST
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="today-summary-main">
-                    <div class="today-summary-amount" id="summary-expense-total">
-                        {{ expense_total|intcomma }}円
-                    </div>
-                </div>
-
-                <div class="today-summary-divider"></div>
-
-                <div class="today-summary-bottom">
-    <a href="{% url 'kakeibo:index' %}" class="mini-action-btn mini-action-soft">
-        <i class="bi bi-arrow-counterclockwise"></i>
-        <span>今日に戻す</span>
-    </a>
-
-    <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}" class="date-nav-btn"
-        aria-label="前日">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
-
-                    <form method="get" class="entry-date-form" id="entry-date-form">
-                        <input type="date" name="date" id="entry-date-input" class="entry-date-input"
-                            value="{{ target_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
-                    </form>
-
-                    {% if can_go_next %}
-                    <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}" class="date-nav-btn"
-                        aria-label="翌日">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                    {% else %}
-                    <button type="button" class="date-nav-btn is-disabled" aria-label="翌日" disabled>
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                    {% endif %}
-                </div>
-
-                <div class="today-summary-actions">
-                   
-
-                    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
-                       class="mini-action-btn mini-action-history">
-                        <i class="bi bi-journal-text"></i>
-                        <div>
-                            <div class="mini-label">Daily Log</div>
-                            <span>この日の記録</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
+            
         </div>
     </div>
 
@@ -207,14 +187,26 @@
 </div>
 
 <nav class="bottom-nav">
+
+    <a href="{% url 'kakeibo:history' %}?date={{ target_date|date:'Y-m-d' }}"
+       class="bottom-nav-btn bottom-nav-btn-daily">
+        <i class="bi bi-journal-text fs-5"></i>
+        <span class="bottom-nav-text">
+            <small>この日の</small>
+            <strong>記録</strong>
+        </span>
+    </a>
+
     <a href="{% url 'kakeibo:summary' %}" class="bottom-nav-btn">
         <i class="bi bi-bar-chart fs-5"></i>
-        <span>記録</span>
+        <span>集計</span>
     </a>
+
     <a href="{% url 'kakeibo:category_list' %}" class="bottom-nav-btn">
         <i class="bi bi-gear fs-5"></i>
         <span>設定</span>
     </a>
+
 </nav>
 </div>
 
@@ -569,6 +561,120 @@
             0 10px 26px rgba(0, 0, 0, 0.22);
     }
 
+    .display-main-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.display-date-area {
+    width: 150px;
+    flex: 0 0 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.display-date-nav {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.display-date-nav-btn {
+    width: 30px;
+    min-width: 30px;
+    height: 36px;
+    flex: 0 0 30px;
+    padding: 0;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 6px 14px rgba(0, 0, 0, 0.14);
+}
+
+.display-date-nav-btn:active {
+    transform: translateY(1px);
+}
+
+.display-date-nav-btn.is-disabled {
+    opacity: 0.35;
+}
+
+.display-date-form {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+}
+
+.display-date-input {
+    width: 100%;
+    height: 36px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0 5px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.12),
+            rgba(255, 255, 255, 0.07)
+        );
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.display-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5);
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+.display-date-input:focus {
+    outline: none;
+    border-color: rgba(90, 200, 250, 0.45);
+    box-shadow: 0 0 0 3px rgba(90, 200, 250, 0.10);
+}
+
+.display-today-btn {
+    width: 100%;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 7px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.display-today-btn:active {
+    transform: translateY(1px);
+}
+
+.display-value-area {
+    flex: 1;
+    min-width: 0;
+}
+
     .display-panel::before {
         content: "";
         position: absolute;
@@ -580,17 +686,17 @@
     }
 
     .amount-display {
-        min-height: 78px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        font-size: clamp(2.35rem, 7.4vw, 3.35rem);
-        font-weight: 700;
-        line-height: 1.08;
-        color: #fff;
-        text-shadow: 0 2px 14px rgba(255, 255, 255, 0.12);
-        word-break: break-all;
-    }
+    min-height: 66px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: clamp(2.35rem, 7.4vw, 3.35rem);
+    font-weight: 700;
+    line-height: 1.08;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(255, 255, 255, 0.12);
+    word-break: break-all;
+}
 
     .formula-display {
         min-height: 18px;
@@ -1102,22 +1208,22 @@
     }
 
     .bottom-nav {
-        position: fixed;
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        z-index: 1100;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 10px;
-        border-radius: 24px;
-        background: rgba(255, 255, 255, 0.10);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
-    }
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 1100;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+}
 
     .bottom-nav-btn {
         display: flex;
@@ -1136,6 +1242,29 @@
     .bottom-nav-btn:active {
         transform: translateY(1px);
     }
+
+    .bottom-nav-btn-daily {
+    gap: 6px;
+}
+
+.bottom-nav-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.05;
+}
+
+.bottom-nav-text small {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.bottom-nav-text strong {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #fff;
+}
 
     .entry-type-toggle {
         margin-bottom: 14px;
@@ -1216,20 +1345,7 @@
         margin-bottom: 2px;
     }
 
-    .display-date-chip {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 2;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    color: rgba(255, 255, 255, 0.66);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
+   
 
     @media (max-width: 420px) {
         .page-logo {
