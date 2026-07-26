@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="ledger-page">
-    <div class="container px-3 pt-2 pb-5">
+    <div class="container px-3 pt-2 pb-0">
 
         <div class="calc-shell mx-auto">
             <div class="calc-top-glow"></div>
@@ -27,61 +27,68 @@
 
 <div class="display-panel">
 
-    <div class="display-main-row">
+    <div class="display-top-row">
 
-        <div class="display-date-area">
+        <div class="display-date-nav">
 
-            <div class="display-date-nav">
-
-                <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}"
-                   class="display-date-nav-btn"
-                   aria-label="前日">
-                    <i class="bi bi-chevron-left"></i>
-                </a>
-
-                <form method="get" class="display-date-form" id="entry-date-form">
-                    <input type="date"
-                           name="date"
-                           id="entry-date-input"
-                           class="display-date-input"
-                           value="{{ target_date|date:'Y-m-d' }}"
-                           max="{{ today|date:'Y-m-d' }}">
-                </form>
-
-                {% if can_go_next %}
-                <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}"
-                   class="display-date-nav-btn"
-                   aria-label="翌日">
-                    <i class="bi bi-chevron-right"></i>
-                </a>
-                {% else %}
-                <button type="button"
-                        class="display-date-nav-btn is-disabled"
-                        aria-label="翌日"
-                        disabled>
-                    <i class="bi bi-chevron-right"></i>
-                </button>
-                {% endif %}
-
-            </div>
-
-            <a href="{% url 'kakeibo:index' %}"
-               class="display-today-btn">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                <span>今日に戻す</span>
+            <a href="{% url 'kakeibo:index' %}?date={{ prev_input_date|date:'Y-m-d' }}"
+               class="display-date-nav-btn"
+               aria-label="前日">
+                <i class="bi bi-chevron-left"></i>
             </a>
+
+            <form method="get"
+                  class="display-date-form"
+                  id="entry-date-form">
+
+                <input
+                    type="date"
+                    name="date"
+                    id="entry-date-input"
+                    class="display-date-input"
+                    value="{{ target_date|date:'Y-m-d' }}"
+                    max="{{ today|date:'Y-m-d' }}">
+            </form>
+
+            {% if can_go_next %}
+            <a href="{% url 'kakeibo:index' %}?date={{ next_input_date|date:'Y-m-d' }}"
+               class="display-date-nav-btn"
+               aria-label="翌日">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <button
+                type="button"
+                class="display-date-nav-btn is-disabled"
+                aria-label="翌日"
+                disabled>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            {% endif %}
 
         </div>
 
-        <div class="display-value-area">
-            <div class="amount-display" id="amount-display">0円</div>
-            <div class="formula-display" id="formula-display">&nbsp;</div>
+        <a href="{% url 'kakeibo:index' %}"
+           class="display-today-btn">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>今日に戻す</span>
+        </a>
+
+    </div>
+
+    <div class="display-value-area">
+
+        <div class="amount-display" id="amount-display">
+            0円
+        </div>
+
+        <div class="formula-display" id="formula-display">
+            &nbsp;
         </div>
 
     </div>
 
 </div>
-
                 <form id="expense-form" method="post" action="{% url 'kakeibo:ajax_add_entry' %}">
                     {% csrf_token %}
                     <input type="hidden" name="amount" id="hidden-amount">
@@ -229,19 +236,25 @@
     }
 
     body {
-        background:
-            radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
-            radial-gradient(circle at 20% 20%, rgba(90, 200, 250, 0.08), transparent 22%),
-            radial-gradient(circle at 80% 10%, rgba(255, 159, 10, 0.08), transparent 20%),
-            linear-gradient(180deg, #131720 0%, #0d1118 100%);
-        color: var(--text-main);
-        min-height: 100vh;
-        padding-bottom: 110px;
-    }
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 28%),
+        radial-gradient(circle at 20% 20%, rgba(90, 200, 250, 0.08), transparent 22%),
+        radial-gradient(circle at 80% 10%, rgba(255, 159, 10, 0.08), transparent 20%),
+        linear-gradient(180deg, #131720 0%, #0d1118 100%);
+    color: var(--text-main);
+
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding-bottom: 0;
+    overscroll-behavior: none;
+}
 
     .ledger-page {
-        min-height: 100vh;
-    }
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
 
     .page-logo-wrap {
         display: flex;
@@ -561,26 +574,25 @@
             0 10px 26px rgba(0, 0, 0, 0.22);
     }
 
-    .display-main-row {
+    
+
+.display-top-row {
     position: relative;
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 10px;
 }
 
-.display-date-area {
-    width: 150px;
-    flex: 0 0 150px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
+
 
 .display-date-nav {
     display: flex;
     align-items: center;
     gap: 5px;
+    flex: 1;
+    min-width: 0;
 }
 
 .display-date-nav-btn {
@@ -602,6 +614,7 @@
         0 6px 14px rgba(0, 0, 0, 0.14);
 }
 
+
 .display-date-nav-btn:active {
     transform: translateY(1px);
 }
@@ -621,7 +634,7 @@
     height: 36px;
     min-width: 0;
     box-sizing: border-box;
-    padding: 0 5px;
+    padding: 0 6px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background:
@@ -631,7 +644,7 @@
             rgba(255, 255, 255, 0.07)
         );
     color: #fff;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     font-weight: 700;
     -webkit-appearance: none;
     appearance: none;
@@ -650,13 +663,13 @@
 }
 
 .display-today-btn {
-    width: 100%;
-    min-height: 30px;
+    flex-shrink: 0;
+    min-height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
-    padding: 0 7px;
+    padding: 0 10px;
     border-radius: 10px;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.88);
@@ -664,6 +677,7 @@
     border: 1px solid rgba(255, 255, 255, 0.09);
     font-size: 0.68rem;
     font-weight: 800;
+    white-space: nowrap;
 }
 
 .display-today-btn:active {
@@ -671,8 +685,10 @@
 }
 
 .display-value-area {
-    flex: 1;
-    min-width: 0;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-top: 12px;
 }
 
     .display-panel::before {
@@ -686,26 +702,29 @@
     }
 
     .amount-display {
-    min-height: 66px;
+    width: 100%;
+    min-height: 76px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
-    font-size: clamp(2.35rem, 7.4vw, 3.35rem);
+    font-size: clamp(3rem, 10vw, 4.3rem);
     font-weight: 700;
-    line-height: 1.08;
+    line-height: 1.05;
     color: #fff;
+    text-align: right;
+    white-space: nowrap;
     text-shadow: 0 2px 14px rgba(255, 255, 255, 0.12);
-    word-break: break-all;
 }
 
     .formula-display {
-        min-height: 18px;
-        text-align: right;
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.50);
-        letter-spacing: 0.03em;
-        margin-top: 2px;
-    }
+    width: 100%;
+    min-height: 18px;
+    text-align: right;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.50);
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+}
 
     .calculator-grid {
         display: grid;
@@ -718,6 +737,7 @@
         height: 66px;
         border: none;
         border-radius: 24px;
+        touch-action: manipulation;
         color: #fff;
         font-size: 1.45rem;
         font-weight: 600;
@@ -821,6 +841,12 @@
     .calc-btn.release-bounce {
         animation: releaseBounce 0.22s ease;
     }
+
+    .ledger-page .container {
+    height: 100%;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+}
 
     @keyframes releaseBounce {
         0% {
