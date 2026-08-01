@@ -1495,36 +1495,55 @@
         background-color: #0d1118;
     }
 
-    /* 下部ナビを少し下へ */
+    /*
+     * 下部固定ナビ
+     * セーフエリアの中で、現在より少し下に配置
+     */
     .bottom-nav {
-    bottom: env(safe-area-inset-bottom);
-}
+        bottom: max(
+            0px,
+            calc(env(safe-area-inset-bottom) - 18px)
+        ) !important;
+    }
 
-    /* 電卓全体 */
-.calc-shell {
-    height: calc(100dvh - 145px - env(safe-area-inset-bottom));
-    margin-top: 2px;
-}
+    /*
+     * 電卓全体
+     * 固定ナビと重ならないよう、高さを確保
+     */
+    .calc-shell {
+        height: calc(
+            100dvh - 178px - env(safe-area-inset-bottom)
+        );
+        margin-top: 2px;
+        box-sizing: border-box;
+    }
 
     .calc-inner {
         height: 100%;
         min-height: 0;
-        padding: 10px 14px 12px;
+        box-sizing: border-box;
+        padding: 10px 14px 8px;
         justify-content: flex-start;
-        gap: 10px;
+        gap: 6px;
+        overflow: hidden;
     }
 
+    /*
+     * 支出・収入切り替え
+     */
     .entry-type-toggle {
-        flex-shrink: 0;
-        margin-bottom: 6px;
+        flex: 0 0 auto;
+        margin-bottom: 4px;
     }
 
-    /* 金額カードを少し大きく */
+    /*
+     * 日付・金額カード
+     */
     .display-panel {
-        flex-shrink: 0;
-        margin-bottom: 10px;
-        padding: 12px 14px 10px;
-        min-height: 96px;
+        flex: 0 0 auto;
+        min-height: 0;
+        margin-bottom: 2px;
+        padding: 10px 12px 8px;
     }
 
     .display-value-area {
@@ -1532,45 +1551,55 @@
     }
 
     .amount-display {
-        min-height: 60px;
-        font-size: clamp(2.1rem, 8vw, 3rem);
+        min-height: 58px;
+        font-size: clamp(2.2rem, 8vw, 3rem);
     }
 
     .formula-display {
         min-height: 12px;
-        margin-top: 2px;
+        margin-top: 1px;
     }
 
-    /* 電卓 */
-    .calculator-grid {
-        flex: 0 0 auto;
-        align-content: start;
-        gap: 10px;
-        margin-bottom: 6px;
-    }
-
-    /* ボタンを縦に少し大きく */
-    .calc-btn {
-        height: 56px;
-        border-radius: 22px;
-        font-size: 1.1rem;
-    }
-
-    /* 日付の←→を丸く大きく */
+    /*
+     * 日付の左右ボタン
+     */
     .display-date-nav-btn {
         width: 40px;
         min-width: 40px;
         height: 40px;
         flex: 0 0 40px;
+        padding: 0;
         border-radius: 50%;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         font-size: 1.1rem;
     }
 
     .display-date-nav-btn i {
+        display: block;
         line-height: 1;
+    }
+
+    /*
+     * 電卓ボタン
+     */
+    .calculator-grid {
+        flex: 0 0 auto;
+        align-content: start;
+        gap: 8px 10px;
+        margin-bottom: 0;
+    }
+
+    .calc-btn {
+        height: clamp(54px, 6.3dvh, 58px);
+        border-radius: 22px;
+        font-size: 1.25rem;
+    }
+
+    .calc-item,
+    .calc-util {
+        font-size: 1rem;
     }
 }
 </style>
