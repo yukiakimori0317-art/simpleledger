@@ -1486,24 +1486,30 @@
 
         
     }
+
 /* ホーム画面から起動したPWAだけに適用 */
 @media (display-mode: standalone) and (max-width: 420px) {
+
+    html,
+    body {
+        background-color: #0d1118;
+    }
 
     .bottom-nav {
         bottom: calc(8px + env(safe-area-inset-bottom));
     }
 
     .calc-shell {
-    height: calc(100dvh - 154px - env(safe-area-inset-bottom));
-    margin-top: 6px;
-}
+        height: calc(100dvh - 154px - env(safe-area-inset-bottom));
+        margin-top: 6px;
+    }
 
-.calc-inner {
-    height: 100%;
-    min-height: 0;
-    padding: 10px 14px 12px;
-    justify-content: space-between;
-}
+    .calc-inner {
+        height: 100%;
+        min-height: 0;
+        padding: 10px 14px 12px;
+        justify-content: flex-start;
+    }
 
     .entry-type-toggle {
         flex-shrink: 0;
@@ -1531,7 +1537,8 @@
     }
 
     .calculator-grid {
-        flex-shrink: 0;
+        flex: 0 0 auto;
+        align-content: start;
         gap: 7px 10px;
         margin-bottom: 0;
     }
