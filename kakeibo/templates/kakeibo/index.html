@@ -1497,14 +1497,14 @@
 
     /* 下部ナビを少し下へ */
     .bottom-nav {
-        bottom: calc(14px + env(safe-area-inset-bottom));
-    }
+    bottom: env(safe-area-inset-bottom);
+}
 
     /* 電卓全体 */
-    .calc-shell {
-        height: calc(100dvh - 160px - env(safe-area-inset-bottom));
-        margin-top: 6px;
-    }
+.calc-shell {
+    height: calc(100dvh - 145px - env(safe-area-inset-bottom));
+    margin-top: 2px;
+}
 
     .calc-inner {
         height: 100%;
@@ -1551,7 +1551,7 @@
 
     /* ボタンを縦に少し大きく */
     .calc-btn {
-        height: 60px;
+        height: 56px;
         border-radius: 22px;
         font-size: 1.1rem;
     }
