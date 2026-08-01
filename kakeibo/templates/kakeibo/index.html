@@ -1494,16 +1494,16 @@
     }
 
     .calc-shell {
-        height: auto;
-        margin-top: 6px;
-    }
+    height: calc(100dvh - 154px - env(safe-area-inset-bottom));
+    margin-top: 6px;
+}
 
-    .calc-inner {
-        height: auto;
-        min-height: 0;
-        padding: 10px 14px 12px;
-        justify-content: flex-start;
-    }
+.calc-inner {
+    height: 100%;
+    min-height: 0;
+    padding: 10px 14px 12px;
+    justify-content: space-between;
+}
 
     .entry-type-toggle {
         flex-shrink: 0;
